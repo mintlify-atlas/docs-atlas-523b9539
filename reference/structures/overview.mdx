@@ -1,0 +1,51 @@
+---
+title: "Data Structures Overview"
+description: "Reference for all data structures available in the TheAlgorithms/Go repository, organized by category."
+---
+
+All data structures live under the `github.com/TheAlgorithms/Go/structure/...` import path, with cache structures under `github.com/TheAlgorithms/Go/cache`.
+
+<Note>
+Every structure in this library uses Go generics (`[T any]` or `[T constraints.Ordered]`). You need Go 1.18 or later.
+</Note>
+
+## Structure index
+
+| Structure | Package path | Key operations | Complexity |
+|---|---|---|---|
+| Singly linked list | `structure/linkedlist` | `AddAtBeg`, `AddAtEnd`, `DelAtBeg`, `DelAtEnd`, `Reverse` | O(1) head ops, O(n) tail/search |
+| Doubly linked list | `structure/linkedlist` | `AddAtBeg`, `AddAtEnd`, `DelAtBeg`, `DelAtEnd`, `Front`, `Back` | O(1) head/tail ops |
+| Cyclic linked list | `structure/linkedlist` | `Add`, `Rotate`, `Delete`, `Destroy` | O(1) add, O(n) rotate |
+| Stack (array) | `structure/stack` | `Push`, `Pop`, `Peek`, `IsEmpty`, `Length` | O(1) all ops |
+| Stack (linked list) | `structure/stack` | `Push`, `Pop`, `Peek`, `Show`, `Length` | O(1) all ops |
+| Queue (array) | `structure/queue` | `EnQueue`, `DeQueue`, `FrontQueue`, `BackQueue` | O(1) enqueue, O(n) dequeue |
+| Queue (linked list) | `structure/queue` | `Enqueue`, `Dequeue`, `Front`, `Back`, `Len` | O(1) all ops |
+| Deque | `structure/deque` | `EnqueueFront`, `EnqueueRear`, `DequeueFront`, `DequeueRear` | O(1) all ops |
+| Dynamic array | `structure/dynamicarray` | `Add`, `Get`, `Put`, `Remove`, `IsEmpty` | O(1) amortized add, O(n) remove |
+| Circular queue | `structure/circularqueue` | `Enqueue`, `Dequeue`, `Peek`, `IsFull`, `IsEmpty` | O(1) all ops |
+| Binary search tree | `structure/tree` | `Push`, `Delete`, `Get`, `Has`, `InOrder`, `PreOrder` | O(log n) avg, O(n) worst |
+| AVL tree | `structure/tree` | `Push`, `Delete`, `Get`, `Has`, traversals | O(log n) guaranteed |
+| Red-Black tree | `structure/tree` | `Push`, `Delete`, `Get`, `Has`, traversals | O(log n) guaranteed |
+| B-tree | `structure/tree` | `Insert`, `Delete`, `Search` | O(log n) |
+| Trie | `structure/trie` | `Insert`, `Find`, `Remove`, `Compact`, `Size`, `Capacity` | O(k) where k = key length |
+| Segment tree | `structure/segmenttree` | `Build`, `Query`, `Update` | O(n log n) build, O(log n) ops |
+| Fenwick tree | `structure/fenwicktree` | `PrefixSum`, `RangeSum`, `Add` | O(n) build, O(log n) ops |
+| Heap | `structure/heap` | `Push`, `Pop`, `Top`, `Empty`, `Size` | O(log n) push/pop, O(1) top |
+| HashMap | `structure/hashmap` | `Put`, `Get`, `Contains` | O(1) avg |
+| Set | `structure/set` | `Add`, `Delete`, `In`, `Union`, `Intersection`, `Difference` | O(1) membership |
+| LRU cache | `cache` | `Get`, `Put` | O(1) |
+| LFU cache | `cache` | `Get`, `Put` | O(n) |
+
+## Pages in this section
+
+<CardGroup cols={2}>
+  <Card title="Linear data structures" href="/reference/structures/linear">
+    Linked lists, stacks, queues, deque, dynamic array, and circular queue.
+  </Card>
+  <Card title="Trees" href="/reference/structures/trees">
+    Binary search tree, AVL, Red-Black, B-tree, Trie, Segment tree, and Fenwick tree.
+  </Card>
+  <Card title="Heap, HashMap & Set" href="/reference/structures/advanced">
+    Min-heap, generic heap, hash map, set, LRU cache, and LFU cache.
+  </Card>
+</CardGroup>

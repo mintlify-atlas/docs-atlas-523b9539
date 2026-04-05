@@ -1,22 +1,11 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "name": "The Algorithms - Go",
+  "projectType": "general",
+  "projectName": "The Algorithms - Go",
+  "projectDescription": "A community-driven collection of algorithms and data structures implemented in Go, following best practices and designed for education and interview preparation.",
   "theme": "palm",
-  "colors": {
-    "primary": "#1e8283",
-    "light": "#375159"
-  },
-  "navbar": {
-    "primary": {
-      "type": "github",
-      "href": "https://github.com/TheAlgorithms/Go"
-    }
-  },
-  "footer": {
-    "socials": {
-      "github": "https://github.com/TheAlgorithms/Go"
-    }
-  },
+  "primaryColor": "#1e8283",
+  "lightColor": "#375159",
+  "darkColor": null,
   "navigation": {
     "tabs": [
       {
@@ -103,5 +92,32 @@
         ]
       }
     ]
-  }
+  },
+  "keyFeatures": [
+    "25+ sorting algorithms including Quicksort, Mergesort, Heapsort, Radix, and Timsort",
+    "Comprehensive graph algorithms: BFS, DFS, Dijkstra, Floyd-Warshall, Kruskal, Prim, Edmond-Karp",
+    "Dynamic programming solutions for classic problems: Knapsack, LCS, Edit Distance, Coin Change",
+    "Essential data structures: Linked Lists, Trees, Heaps, Hash Maps, Segment Trees, Tries",
+    "String algorithms: Aho-Corasick, KMP, Boyer-Moore, Levenshtein, Manacher",
+    "Number theory: Prime testing (Miller-Rabin), GCD, Modular arithmetic, Factorization",
+    "Cryptographic ciphers: Caesar, RSA, Diffie-Hellman, ROT13, XOR, Polybius",
+    "All implementations follow Go best practices with GoDoc comments and test coverage"
+  ],
+  "publicApiSurface": [
+    "sort.Bubble, sort.Merge, sort.Quicksort, sort.HeapSort, sort.RadixSort, sort.Shell",
+    "search.Binary, search.Linear, search.Jump, search.Interpolation, search.Ternary",
+    "graph.BreadthFirstSearch, graph.DepthFirstSearch, graph.FloydWarshall, graph.KruskalMST, graph.PrimMST",
+    "dynamic.Knapsack, dynamic.LongestCommonSubsequence, dynamic.EditDistanceDP, dynamic.CoinChange",
+    "structure/linkedlist: NewSingly, NewDoubly, NewCyclic",
+    "structure/heap: New, NewAny",
+    "structure/hashmap: New, Make",
+    "structure/tree: (BST, AVL, Red-Black tree implementations)",
+    "math/prime: MillerRabinDeterministic, TrialDivision, Sieve",
+    "math/gcd: Recursive, Iterative, ExtendedRecursive",
+    "cipher/caesar: Encrypt, Decrypt",
+    "cipher/rsa: Encrypt, Decrypt",
+    "compression: HuffTree, HuffEncode, HuffDecode",
+    "hashing/sha256: Hash",
+    "conversion: Base64Encode, Base64Decode, BinaryToDecimal, IntToRoman"
+  ]
 }

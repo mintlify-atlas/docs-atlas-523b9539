@@ -1,0 +1,386 @@
+---
+title: "Non-comparison and specialty sorting"
+description: "Counting, Radix, Bucket, Pigeonhole, and specialty sorts (Bogo, Patience, Stooge, Pancake) in TheAlgorithms/Go — with real signatures and Go examples."
+---
+
+Non-comparison sorts exploit the structure of keys rather than comparing them with `<` or `>`. Because they bypass the O(n log n) lower bound that applies to comparison-based sorting, they can achieve linear time for suitable input distributions. This page also covers several specialty algorithms that are educational, historically interesting, or useful in narrow domains.
+
+```go
+import "github.com/TheAlgorithms/Go/sort"
+```
+
+---
+
+## Non-comparison sorts
+
+<AccordionGroup>
+
+  <Accordion title="Counting sort">
+
+    ```go
+    func Count[T constraints.Integer](data []T) []T
+    ```
+
+    | Property | Value |
+    |---|---|
+    | Time | O(n + k) |
+    | Space | O(n + k) |
+    | Stable | Yes |
+    | Constraint | `constraints.Integer` |
+
+    *n = number of elements, k = range of values (max − min + 1)*
+
+    **How it works.** Counting sort determines the range of the input by finding its minimum and maximum values. It allocates a count array of length k and increments the count for each element. It then overwrites the original slice by iterating through the count array, writing each value the appropriate number of times. This implementation handles negative integers correctly by using the minimum as an offset.
+
+    <Note>
+    The `Integer` constraint (rather than `Ordered`) is required because the algorithm uses elements as array indices after shifting by the minimum. Floating-point and string types cannot serve as indices.
+    </Note>
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        gosort "github.com/TheAlgorithms/Go/sort"
+    )
+
+    func main() {
+        nums := []int{4, 2, 2, 8, 3, 3, 1}
+        sorted := gosort.Count(nums)
+        fmt.Println(sorted) // [1 2 2 3 3 4 8]
+
+        // Works with negative integers too
+        mixed := []int{-3, 1, -1, 2, 0}
+        fmt.Println(gosort.Count(mixed)) // [-3 -1 0 1 2]
+    }
+    ```
+
+    <Warning>
+    Counting sort allocates a count array of size `max - min + 1`. If the range k is very large (e.g., sorting `[0, 1000000]` with only two elements) the memory usage is wasteful. Use Radix sort instead for large-range integer data.
+    </Warning>
+
+  </Accordion>
+
+  <Accordion title="Radix sort">
+
+    ```go
+    func RadixSort[T constraints.Integer](arr []T) []T
+    ```
+
+    | Property | Value |
+    |---|---|
+    | Time | O(n × k) |
+    | Space | O(n) |
+    | Stable | Yes |
+    | Constraint | `constraints.Integer` |
+
+    *n = number of elements, k = number of digits in the largest value*
+
+    **How it works.** Radix sort processes the input digit by digit from the least significant to the most significant digit (LSD radix sort), using a stable counting sort as a subroutine at each digit position. This implementation separates negative and non-negative numbers, sorts each group independently (negatives with sign removed), reverses the negatives and restores signs, then concatenates the two sorted groups.
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        gosort "github.com/TheAlgorithms/Go/sort"
+    )
+
+    func main() {
+        nums := []int{170, 45, 75, 90, 802, 24, 2, 66}
+        sorted := gosort.RadixSort(nums)
+        fmt.Println(sorted) // [2 24 45 66 75 90 170 802]
+
+        // Handles negative numbers
+        mixed := []int{-5, 3, -2, 8, 0, -1}
+        fmt.Println(gosort.RadixSort(mixed)) // [-5 -2 -1 0 3 8]
+    }
+    ```
+
+    <Tip>
+    Radix sort is a strong choice when you have a large number of integers with a bounded number of digits (e.g., 32-bit integers have at most 10 decimal digits), because k is effectively constant and the algorithm runs in O(n) time.
+    </Tip>
+
+  </Accordion>
+
+  <Accordion title="Bucket sort">
+
+    ```go
+    func Bucket[T constraints.Number](arr []T) []T
+    ```
+
+    | Property | Value |
+    |---|---|
+    | Time (average) | O(n + k) |
+    | Time (worst) | O(n²) |
+    | Space | O(n) |
+    | Stable | Yes (uses Insertion sort per bucket) |
+    | Constraint | `constraints.Number` |
+
+    **How it works.** Bucket sort distributes elements into `n` equally-sized buckets based on their value relative to the overall range `[min, max]`. Each bucket is then sorted independently using Insertion sort. Because Insertion sort is O(k²) per bucket and the buckets collectively hold n elements, the expected time is O(n) when elements are uniformly distributed. Sorted buckets are concatenated to produce the result.
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        gosort "github.com/TheAlgorithms/Go/sort"
+    )
+
+    func main() {
+        // Works well with uniformly distributed floats
+        nums := []float64{0.78, 0.17, 0.39, 0.26, 0.72, 0.94, 0.21, 0.12}
+        sorted := gosort.Bucket(nums)
+        fmt.Println(sorted) // [0.12 0.17 0.21 0.26 0.39 0.72 0.78 0.94]
+
+        // Also works with integers
+        ints := []int{5, 1, 4, 2, 8}
+        fmt.Println(gosort.Bucket(ints)) // [1 2 4 5 8]
+    }
+    ```
+
+    <Warning>
+    Bucket sort assumes elements are distributed over a bounded numeric range. If all elements land in a single bucket, performance degrades to O(n²) (Insertion sort on the full input). It is not suitable for data with a highly skewed distribution.
+    </Warning>
+
+  </Accordion>
+
+  <Accordion title="Pigeonhole sort">
+
+    ```go
+    func Pigeonhole[T constraints.Integer](arr []T) []T
+    ```
+
+    | Property | Value |
+    |---|---|
+    | Time | O(n + N) |
+    | Space | O(N) |
+    | Stable | Yes |
+    | Constraint | `constraints.Integer` |
+
+    *n = number of elements, N = range of input (max − min + 1)*
+
+    **How it works.** Pigeonhole sort finds the minimum and maximum of the input, then creates a `holes` slice of size N. It increments `holes[element - min]` for each element. It then rebuilds the sorted array by iterating through `holes` and writing each value into the output the number of times it appears. The approach is conceptually identical to Counting sort; both are O(n + N) and well-suited to small-range integer data.
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        gosort "github.com/TheAlgorithms/Go/sort"
+    )
+
+    func main() {
+        nums := []int{8, 3, 2, 7, 4, 6, 8}
+        sorted := gosort.Pigeonhole(nums)
+        fmt.Println(sorted) // [2 3 4 6 7 8 8]
+    }
+    ```
+
+    **Counting sort vs. Pigeonhole sort.** Both allocate a count/hole array of size `max - min + 1`. The primary practical difference is that Counting sort writes each value back to the original slice in-place, while Pigeonhole sort uses the same array as both the count and output buffer. For integer keys where counts can be ≥ 1, both are equivalent.
+
+  </Accordion>
+
+</AccordionGroup>
+
+---
+
+## Specialty sorts
+
+These algorithms are not recommended for general production use, but they are valuable for education, interviews, or specific constraints.
+
+<AccordionGroup>
+
+  <Accordion title="Patience sort">
+
+    ```go
+    func Patience[T constraints.Ordered](arr []T) []T
+    ```
+
+    | Property | Value |
+    |---|---|
+    | Best case | O(n log n) |
+    | Average case | O(n log n) |
+    | Worst case | O(n log n) |
+    | Space | O(n) |
+    | Stable | Yes |
+
+    **How it works.** Patience sort is inspired by the solitaire card game patience. It deals each element onto one of several "piles" using binary search: an element is placed on the leftmost pile whose top card is ≥ the element, or starts a new pile if none qualifies. The piles are then merged using a k-way merge. The number of piles equals the length of the longest strictly increasing subsequence of the input. Patience sort has the same asymptotic complexity as Merge sort but with different constant factors.
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        gosort "github.com/TheAlgorithms/Go/sort"
+    )
+
+    func main() {
+        nums := []int{3, 1, 4, 1, 5, 9, 2, 6, 5, 3}
+        sorted := gosort.Patience(nums)
+        fmt.Println(sorted) // [1 1 2 3 3 4 5 5 6 9]
+    }
+    ```
+
+  </Accordion>
+
+  <Accordion title="Pancake sort">
+
+    ```go
+    func Pancake[T constraints.Ordered](arr []T) []T
+    ```
+
+    Internal helper (unexported):
+
+    ```go
+    func flip[T constraints.Ordered](arr []T, i int) []T
+    ```
+
+    | Property | Value |
+    |---|---|
+    | Best case | O(n²) |
+    | Average case | O(n²) |
+    | Worst case | O(n²) |
+    | Space | O(1) |
+    | Stable | No |
+
+    **How it works.** Pancake sort uses only one operation: `flip(arr, i)`, which reverses the subslice from index 0 to i. To place element k in its correct position at the end of the unsorted region, the algorithm first flips the maximum element to index 0, then flips it to the end of the unsorted region. The name comes from the analogy of sorting a stack of differently-sized pancakes using only a spatula to flip from the top.
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        gosort "github.com/TheAlgorithms/Go/sort"
+    )
+
+    func main() {
+        nums := []int{3, 6, 2, 7, 4}
+        sorted := gosort.Pancake(nums)
+        fmt.Println(sorted) // [2 3 4 6 7]
+    }
+    ```
+
+  </Accordion>
+
+  <Accordion title="Stooge sort">
+
+    ```go
+    func Stooge[T constraints.Ordered](arr []T) []T
+    ```
+
+    Internal recursive helper (unexported):
+
+    ```go
+    func innerStooge[T constraints.Ordered](arr []T, i int32, j int32) []T
+    ```
+
+    | Property | Value |
+    |---|---|
+    | Time | O(n^2.709511) |
+    | Space | O(n) recursion stack |
+    | Stable | No |
+
+    **How it works.** Stooge sort is a recursive algorithm named after the Three Stooges. Given a subarray:
+    1. If the first element is larger than the last, swap them.
+    2. If the subarray has more than two elements, recursively sort the first two-thirds, then the last two-thirds, then the first two-thirds again.
+
+    This triple recursion produces the unusual exponent in its time complexity (~O(n^2.71)), making it slower than most O(n²) sorts. It is purely educational.
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        gosort "github.com/TheAlgorithms/Go/sort"
+    )
+
+    func main() {
+        nums := []int{2, 4, 5, 3, 1}
+        sorted := gosort.Stooge(nums)
+        fmt.Println(sorted) // [1 2 3 4 5]
+    }
+    ```
+
+    <Warning>
+    Stooge sort is slower than Bubble sort in practice. Do not use it in performance-sensitive code.
+    </Warning>
+
+  </Accordion>
+
+  <Accordion title="Bogo sort">
+
+    ```go
+    func Bogo[T constraints.Number](arr []T) []T
+    ```
+
+    Internal helpers (unexported):
+
+    ```go
+    func isSorted[T constraints.Number](arr []T) bool
+    func shuffle[T constraints.Number](arr []T)
+    ```
+
+    | Property | Value |
+    |---|---|
+    | Best case | O(n) |
+    | Average case | O(n × n!) |
+    | Worst case | O((n+1)!) unbounded |
+    | Space | O(1) |
+    | Stable | No |
+
+    **How it works.** Bogo sort (also called permutation sort, stupid sort, or monkey sort) randomly shuffles the slice and checks whether it is sorted. It repeats until the slice happens to be in sorted order. On average it requires n! shuffles. For n = 10 this is 3,628,800 expected iterations.
+
+    <Warning>
+    Bogo sort is not guaranteed to terminate in finite time on hardware (in theory it could shuffle to an unsorted permutation forever). It is included here purely for educational and humorous purposes. Never use it in production code.
+    </Warning>
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        gosort "github.com/TheAlgorithms/Go/sort"
+    )
+
+    func main() {
+        // Keep the slice very small — performance degrades factorially
+        nums := []int{3, 1, 2}
+        sorted := gosort.Bogo(nums)
+        fmt.Println(sorted) // [1 2 3]
+    }
+    ```
+
+    <Tip>
+    Bogo sort is sometimes used as a benchmark for "worst possible algorithm" in algorithm analysis courses, or as a humorous illustration of why algorithm choice matters.
+    </Tip>
+
+  </Accordion>
+
+</AccordionGroup>
+
+---
+
+## Complexity comparison
+
+| Algorithm | Time | Space | Constraint | Use when |
+|---|---|---|---|---|
+| `Count` | O(n + k) | O(n + k) | Integer | Small integer range, need stability |
+| `RadixSort` | O(n × d) | O(n) | Integer | Integers with bounded digits, large n |
+| `Bucket` | O(n + k) avg | O(n) | Number | Uniformly distributed numeric data |
+| `Pigeonhole` | O(n + N) | O(N) | Integer | Small integer range, duplicate-heavy data |
+| `Patience` | O(n log n) | O(n) | Ordered | General purpose, need stability, finding LIS |
+| `Pancake` | O(n²) | O(1) | Ordered | Constrained environments: only flip allowed |
+| `Stooge` | O(n^2.71) | O(n) | Ordered | Education only |
+| `Bogo` | O((n+1)!) | O(1) | Number | Never (education/humour only) |
+
+---
+
+<CardGroup cols={2}>
+  <Card title="Comparison-based sorts" icon="arrow-up-wide-short" href="/algorithms/sorting/comparison-based">
+    Bubble, Insertion, Shell, Heap, Merge, Quick, Cocktail, Comb, Cycle, and more.
+  </Card>
+  <Card title="Sorting overview" icon="table" href="/algorithms/sorting/overview">
+    Full complexity table and algorithm selection guide for all sorting algorithms.
+  </Card>
+</CardGroup>

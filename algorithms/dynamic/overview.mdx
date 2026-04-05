@@ -1,0 +1,84 @@
+---
+title: "Dynamic Programming"
+description: "A collection of dynamic programming algorithms in Go, covering classic optimization problems, sequence problems, and combinatorics."
+---
+
+Dynamic programming (DP) is an algorithmic technique that solves complex problems by breaking them into overlapping subproblems, solving each subproblem once, and storing the results for reuse. It is applicable when a problem exhibits **optimal substructure** (an optimal solution is composed of optimal solutions to subproblems) and **overlapping subproblems** (the same subproblems are solved multiple times).
+
+## Memoization vs. tabulation
+
+There are two equivalent ways to implement dynamic programming:
+
+**Memoization (top-down)** starts from the original problem and recurses into subproblems, caching results so each subproblem is only computed once.
+
+```go
+// Top-down: solve recursively, cache results
+var memo = map[int]int{}
+func fib(n int) int {
+    if n <= 1 { return n }
+    if v, ok := memo[n]; ok { return v }
+    memo[n] = fib(n-1) + fib(n-2)
+    return memo[n]
+}
+```
+
+**Tabulation (bottom-up)** builds a table of subproblem solutions iteratively, starting from the smallest subproblems and composing them upward.
+
+```go
+// Bottom-up: fill table from base cases
+func fib(n int) int {
+    dp := make([]int, n+1)
+    dp[0], dp[1] = 0, 1
+    for i := 2; i <= n; i++ {
+        dp[i] = dp[i-1] + dp[i-2]
+    }
+    return dp[n]
+}
+```
+
+<Note>
+Most algorithms in `github.com/TheAlgorithms/Go/dynamic` use the tabulation approach, offering predictable time and space complexity without recursion stack overhead.
+</Note>
+
+## Algorithms in this package
+
+| Algorithm | Function(s) | Problem type | Time complexity | Space complexity |
+|---|---|---|---|---|
+| 0/1 Knapsack | `Knapsack` | Optimization | O(n × W) | O(n × W) |
+| Coin Change | `CoinChange` | Counting | O(n × m) | O(m) |
+| Fibonacci | `NthFibonacci` | Sequence | O(n) | O(1) |
+| Trap Rain Water | `TrapRainWater` | Array | O(n) | O(n) |
+| Subset Sum | `IsSubsetSum` | Decision | O(n × sum) | O(n × sum) |
+| Rod Cutting | `CutRodRec`, `CutRodDp` | Optimization | O(n²) | O(n) |
+| Matrix Chain Multiplication | `MatrixChainRec`, `MatrixChainDp` | Optimization | O(n³) | O(n²) |
+| Catalan Numbers | `NthCatalanNumber` | Combinatorics | O(n²) | O(n) |
+| Binomial Coefficient | `Bin2` | Combinatorics | O(n × k) | O(n × k) |
+| Burst Balloons | `MaxCoins` | Optimization | O(n³) | O(n²) |
+| Dice Throw | `DiceThrow` | Counting | O(m × n × sum) | O(m × sum) |
+| Egg Dropping | `EggDropping` | Decision | O(e × f²) | O(e × f) |
+| Unique Paths | `UniquePaths` | Counting | O(m × n) | O(m × n) |
+| Partition Problem | `PartitionProblem` | Decision | O(n × sum) | O(n × sum) |
+| Tiling Problem | `TilingProblem` | Counting | O(n) | O(n) |
+| Optimal BST | `OptimalBST` | Optimization | O(n³) | O(n²) |
+| Longest Common Subsequence | `LongestCommonSubsequence` | String/Sequence | O(m × n) | O(m × n) |
+| Edit Distance | `EditDistanceRecursive`, `EditDistanceDP` | String | O(m × n) | O(m × n) |
+| Longest Increasing Subsequence | `LongestIncreasingSubsequence` | Sequence | O(n²) | O(n) |
+| LIS (Greedy) | `LongestIncreasingSubsequenceGreedy` | Sequence | O(n log n) | O(n) |
+| Longest Palindromic Subsequence | `LpsRec`, `LpsDp` | String/Sequence | O(n²) | O(n²) |
+| Longest Palindromic Substring | `LongestPalindromicSubstring` | String | O(n²) | O(n²) |
+| Abbreviation | `Abbreviation` | String | O(n × m) | O(n × m) |
+| Wildcard Matching | `IsMatch` | String | O(m × n) | O(m × n) |
+| Word Break | `WordBreak` | String | O(n²) | O(n) |
+| Interleaving Strings | `IsInterleave` | String | O(m × n) | O(m × n) |
+| Longest Arithmetic Subsequence | `LongestArithmeticSubsequence` | Sequence | O(n²) | O(n²) |
+
+## Explore by category
+
+<CardGroup cols={2}>
+  <Card title="Classic DP Problems" icon="layer-group" href="/algorithms/dynamic/classic-problems">
+    Knapsack, coin change, Fibonacci, rain water trapping, burst balloons, dice throw, egg dropping, unique paths, partition, tiling, optimal BST, and more.
+  </Card>
+  <Card title="String & Sequence Problems" icon="text-size" href="/algorithms/dynamic/string-problems">
+    LCS, edit distance, LIS, longest palindromic subsequence/substring, abbreviation, wildcard matching, word break, interleaving strings, and arithmetic subsequence.
+  </Card>
+</CardGroup>

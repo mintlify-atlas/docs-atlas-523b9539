@@ -1,0 +1,458 @@
+---
+title: "Search Algorithm Reference"
+description: "Function signatures, complexity, and Go code examples for every algorithm in the github.com/TheAlgorithms/Go/search package."
+keywords: ["search", "Go", "binary search", "linear search", "jump search", "interpolation", "ternary", "selectk", "ErrNotFound"]
+---
+
+Full reference for the `search` package. Each section covers one algorithm: its signature, complexity, how it works, and a complete usage example.
+
+```go
+import "github.com/TheAlgorithms/Go/search"
+```
+
+## Error handling
+
+All search functions that look for an element in a slice share a consistent error contract:
+
+- On success, they return the zero-based index and `nil`.
+- On failure, they return `-1` and `search.ErrNotFound`.
+
+```go
+import (
+    "errors"
+    "fmt"
+
+    "github.com/TheAlgorithms/Go/search"
+)
+
+idx, err := search.Linear([]int{3, 1, 4, 1, 5}, 9)
+if err != nil {
+    if errors.Is(err, search.ErrNotFound) {
+        fmt.Println("target not in slice")
+    }
+    return
+}
+fmt.Println("found at index", idx)
+```
+
+<Note>
+  `ErrNotFound` is a sentinel error defined as `errors.New("target not found in array")`. Use `errors.Is` for idiomatic comparison.
+</Note>
+
+---
+
+## Algorithms
+
+<AccordionGroup>
+
+  <Accordion title="Linear search" icon="arrow-right">
+    **Signature**
+
+    ```go
+    func Linear(array []int, query int) (int, error)
+    ```
+
+    | | |
+    |---|---|
+    | Time complexity | O(n) |
+    | Space complexity | O(1) |
+    | Sorted input required | No |
+
+    Linear search iterates through every element of the slice from left to right until it finds one equal to `query`. It is the simplest possible search and the only one that works on unsorted data.
+
+    **Example**
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+
+        "github.com/TheAlgorithms/Go/search"
+    )
+
+    func main() {
+        data := []int{5, 3, 8, 1, 9, 2}
+
+        idx, err := search.Linear(data, 9)
+        if err != nil {
+            fmt.Println("not found")
+            return
+        }
+        fmt.Println("found at index", idx) // found at index 4
+    }
+    ```
+
+    <Tip>
+      Prefer linear search for slices with fewer than ~20 elements or when the data is unsorted and sorting is not worthwhile.
+    </Tip>
+  </Accordion>
+
+  <Accordion title="Binary search (recursive)" icon="arrow-right">
+    **Signature**
+
+    ```go
+    func Binary(array []int, target int, lowIndex int, highIndex int) (int, error)
+    ```
+
+    | | |
+    |---|---|
+    | Time complexity | O(log n) |
+    | Space complexity | O(log n) — recursive call stack |
+    | Sorted input required | Yes |
+
+    Binary search divides the search interval in half on each step. This recursive variant calls itself with an updated `lowIndex` or `highIndex` depending on whether the target is less than or greater than the midpoint.
+
+    Pass `0` and `len(array)-1` as the initial bounds.
+
+    **Example**
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+
+        "github.com/TheAlgorithms/Go/search"
+    )
+
+    func main() {
+        sorted := []int{1, 3, 5, 7, 9, 11, 13}
+
+        idx, err := search.Binary(sorted, 7, 0, len(sorted)-1)
+        if err != nil {
+            fmt.Println("not found")
+            return
+        }
+        fmt.Println("found at index", idx) // found at index 3
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Binary search (iterative)" icon="arrow-right">
+    **Signature**
+
+    ```go
+    func BinaryIterative(array []int, target int) (int, error)
+    ```
+
+    | | |
+    |---|---|
+    | Time complexity | O(log n) |
+    | Space complexity | O(1) |
+    | Sorted input required | Yes |
+
+    The iterative variant avoids the call stack overhead of the recursive version. It is preferable for large slices where stack depth could be a concern.
+
+    **Example**
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+
+        "github.com/TheAlgorithms/Go/search"
+    )
+
+    func main() {
+        sorted := []int{2, 4, 6, 8, 10, 12}
+
+        idx, err := search.BinaryIterative(sorted, 10)
+        if err != nil {
+            fmt.Println("not found")
+            return
+        }
+        fmt.Println("found at index", idx) // found at index 4
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="LowerBound and UpperBound" icon="arrow-right">
+    **Signatures**
+
+    ```go
+    func LowerBound(array []int, target int) (int, error)
+    func UpperBound(array []int, target int) (int, error)
+    ```
+
+    | | |
+    |---|---|
+    | Time complexity | O(log n) |
+    | Space complexity | O(1) |
+    | Sorted input required | Yes |
+
+    These are boundary variants of binary search analogous to C++'s `std::lower_bound` and `std::upper_bound`.
+
+    - `LowerBound` returns the index of the first element that is **greater than or equal to** `target`.
+    - `UpperBound` returns the index of the first element that is **strictly greater than** `target`.
+
+    Both return `-1` and `ErrNotFound` if no qualifying element exists.
+
+    **Example**
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+
+        "github.com/TheAlgorithms/Go/search"
+    )
+
+    func main() {
+        sorted := []int{1, 3, 3, 5, 7}
+
+        lo, _ := search.LowerBound(sorted, 3)
+        hi, _ := search.UpperBound(sorted, 3)
+
+        fmt.Println("lower bound:", lo) // lower bound: 1
+        fmt.Println("upper bound:", hi) // upper bound: 3
+    }
+    ```
+
+    <Note>
+      Use `LowerBound` and `UpperBound` together to find the range of indices where a value appears in a sorted slice with duplicates.
+    </Note>
+  </Accordion>
+
+  <Accordion title="Jump search" icon="arrow-right">
+    **Signatures**
+
+    ```go
+    func Jump(array []int, target int) (int, error)
+    func Jump2(arr []int, target int) (int, error)
+    ```
+
+    | | |
+    |---|---|
+    | Time complexity | O(√n) |
+    | Space complexity | O(1) |
+    | Sorted input required | Yes |
+
+    Jump search divides the sorted slice into blocks of size √n. It jumps forward one block at a time until it overshoots the target, then performs a linear scan backwards through the last block.
+
+    `Jump` and `Jump2` implement the same algorithm with slightly different internal logic. `Jump2` uses a cleaner loop structure: it first finds the right-hand boundary by stepping forward, then scans the candidate block linearly.
+
+    **Example using `Jump`**
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+
+        "github.com/TheAlgorithms/Go/search"
+    )
+
+    func main() {
+        sorted := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
+
+        idx, err := search.Jump(sorted, 11)
+        if err != nil {
+            fmt.Println("not found")
+            return
+        }
+        fmt.Println("found at index", idx) // found at index 10
+    }
+    ```
+
+    **Example using `Jump2`**
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+
+        "github.com/TheAlgorithms/Go/search"
+    )
+
+    func main() {
+        sorted := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
+
+        idx, err := search.Jump2(sorted, 5)
+        if err != nil {
+            fmt.Println("not found")
+            return
+        }
+        fmt.Println("found at index", idx) // found at index 4
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Interpolation search" icon="arrow-right">
+    **Signature**
+
+    ```go
+    func Interpolation(sortedData []int, guess int) (int, error)
+    ```
+
+    | | |
+    |---|---|
+    | Time complexity (average) | O(log log n) on uniformly distributed data |
+    | Time complexity (worst) | O(n) |
+    | Space complexity | O(1) |
+    | Sorted input required | Yes |
+
+    Interpolation search improves on binary search by estimating the probable position of the target using a linear interpolation formula rather than always picking the midpoint. When values are uniformly distributed, it converges much faster.
+
+    If the slice contains duplicate values, `Interpolation` scans backwards from the found position to return the first occurrence.
+
+    **Example**
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+
+        "github.com/TheAlgorithms/Go/search"
+    )
+
+    func main() {
+        sorted := []int{1, 2, 9, 20, 31, 45, 63, 70, 100}
+
+        idx, err := search.Interpolation(sorted, 100)
+        if err != nil {
+            fmt.Println("not found")
+            return
+        }
+        fmt.Println("found at index", idx) // found at index 8
+    }
+    ```
+
+    <Warning>
+      On skewed or clustered distributions, interpolation search degrades to O(n). Prefer `BinaryIterative` when value distribution is unknown.
+    </Warning>
+  </Accordion>
+
+  <Accordion title="Ternary search (TernaryMax / TernaryMin)" icon="arrow-right">
+    **Signatures**
+
+    ```go
+    func TernaryMax(a, b, epsilon float64, f func(x float64) float64) (float64, error)
+    func TernaryMin(a, b, epsilon float64, f func(x float64) float64) (float64, error)
+    ```
+
+    | | |
+    |---|---|
+    | Time complexity | O(log n) iterations |
+    | Space complexity | O(log n) — recursive call stack |
+    | Sorted input required | No (operates on a unimodal function) |
+
+    Unlike the other algorithms, ternary search does not operate on slices. It finds the **maximum** (`TernaryMax`) or **minimum** (`TernaryMin`) value of a unimodal function `f` over the continuous interval `[a, b]`.
+
+    The function divides the interval into thirds on each recursive call. Convergence is controlled by `epsilon`: recursion stops when `|a - b| <= epsilon` and returns `f((a+b)/2)`.
+
+    Both functions return an error if either bound is infinite.
+
+    **Example: finding the maximum of a parabola**
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+
+        "github.com/TheAlgorithms/Go/search"
+    )
+
+    func main() {
+        // f(x) = -(x-3)^2 + 9 has a maximum at x=3, f(3)=9
+        f := func(x float64) float64 {
+            return -(x-3)*(x-3) + 9
+        }
+
+        max, err := search.TernaryMax(-10, 10, 1e-9, f)
+        if err != nil {
+            fmt.Println("error:", err)
+            return
+        }
+        fmt.Printf("maximum value: %.6f\n", max) // maximum value: 9.000000
+    }
+    ```
+
+    **Example: finding the minimum of a parabola**
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+
+        "github.com/TheAlgorithms/Go/search"
+    )
+
+    func main() {
+        // g(x) = (x-2)^2 has a minimum at x=2, g(2)=0
+        g := func(x float64) float64 {
+            return (x - 2) * (x - 2)
+        }
+
+        min, err := search.TernaryMin(-10, 10, 1e-9, g)
+        if err != nil {
+            fmt.Println("error:", err)
+            return
+        }
+        fmt.Printf("minimum value: %.6f\n", min) // minimum value: 0.000000
+    }
+    ```
+
+    <Note>
+      The function `f` must be unimodal on `[a, b]` — it must have exactly one peak (for `TernaryMax`) or valley (for `TernaryMin`). Results are undefined for non-unimodal functions.
+    </Note>
+  </Accordion>
+
+  <Accordion title="SelectK" icon="arrow-right">
+    **Signature**
+
+    ```go
+    func SelectK(array []int, k int) (int, error)
+    ```
+
+    | | |
+    |---|---|
+    | Time complexity (average) | O(n) |
+    | Time complexity (worst) | O(n²) |
+    | Space complexity | O(log n) — recursive call stack |
+    | Sorted input required | No |
+
+    `SelectK` finds the **k-th largest** element in an unsorted slice using the quickselect algorithm. It partially partitions the slice in place until the element at the correct position is found.
+
+    Returns `ErrNotFound` if `k` is greater than the length of the slice.
+
+    <Warning>
+      `SelectK` modifies the input slice in place during partitioning. Make a copy before calling if you need to preserve the original order.
+    </Warning>
+
+    **Example**
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+
+        "github.com/TheAlgorithms/Go/search"
+    )
+
+    func main() {
+        data := []int{7, 2, 5, 1, 9, 3}
+
+        // Find the 2nd largest element
+        val, err := search.SelectK(data, 2)
+        if err != nil {
+            fmt.Println("not found:", err)
+            return
+        }
+        fmt.Println("2nd largest:", val) // 2nd largest: 7
+    }
+    ```
+
+    <Tip>
+      Use `SelectK` when you only need one order-statistic value (e.g., the median or the top-k element) and do not want the cost of fully sorting the slice.
+    </Tip>
+  </Accordion>
+
+</AccordionGroup>

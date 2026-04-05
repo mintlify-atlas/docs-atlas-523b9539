@@ -1,0 +1,113 @@
+---
+title: "Sorting algorithms"
+description: "Overview of all sorting algorithms implemented in TheAlgorithms/Go, with complexity analysis and guidance on when to use each."
+---
+
+The `sort` package in TheAlgorithms/Go provides implementations of more than twenty sorting algorithms, from classic comparison-based sorts to non-comparison integer sorts and educational curiosities.
+
+## Import
+
+```go
+import "github.com/TheAlgorithms/Go/sort"
+```
+
+All functions are generic and operate on slices constrained by `constraints.Ordered`, `constraints.Number`, or `constraints.Integer` from the companion `constraints` package.
+
+## Algorithm reference
+
+### Comparison-based sorts
+
+These algorithms sort by comparing elements using `<` or `>`. They work on any `constraints.Ordered` type (integers, floats, strings).
+
+| Algorithm | Best | Average | Worst | Space | Stable | Function |
+|---|---|---|---|---|---|---|
+| Bubble | O(n) | O(n²) | O(n²) | O(1) | Yes | `Bubble[T]` |
+| Insertion | O(n) | O(n²) | O(n²) | O(1) | Yes | `Insertion[T]` |
+| Binary Insertion | O(n log n)* | O(n²) | O(n²) | O(1) | Yes | `BinaryInsertion[T]` |
+| Selection | O(n²) | O(n²) | O(n²) | O(1) | No | `Selection[T]` |
+| Shell | O(n log n) | O(n log² n) | O(n²) | O(1) | No | `Shell[T]` |
+| Heap | O(n log n) | O(n log n) | O(n log n) | O(1) | No | `HeapSort[T]` |
+| Merge | O(n log n) | O(n log n) | O(n log n) | O(n) | Yes | `Merge[T]` |
+| Merge (iterative) | O(n log n) | O(n log n) | O(n log n) | O(n) | Yes | `MergeIter[T]` |
+| Parallel Merge | O(n log n) | O(n log n) | O(n log n) | O(n) | Yes | `ParallelMerge[T]` |
+| Quick | O(n log n) | O(n log n) | O(n²) | O(log n) | No | `Quicksort[T]` |
+| Cocktail | O(n) | O(n²) | O(n²) | O(1) | Yes | `Cocktail[T]` |
+| Comb | O(n log n) | O(n²/2ᵖ) | O(n²) | O(1) | No | `Comb[T]` |
+| Cycle | O(n²) | O(n²) | O(n²) | O(1) | No | `Cycle[T]` |
+| Timsort | O(n) | O(n log n) | O(n log n) | O(n) | Yes | `Timsort[T]` |
+| Patience | O(n log n) | O(n log n) | O(n log n) | O(n) | Yes | `Patience[T]` |
+| Pancake | O(n²) | O(n²) | O(n²) | O(1) | No | `Pancake[T]` |
+| Exchange | O(n²) | O(n²) | O(n²) | O(1) | No | `Exchange[T]` |
+| Simple | O(n²) | O(n²) | O(n²) | O(1) | No | `Simple[T]` |
+| ImprovedSimple | O(n²) | O(n²) | O(n²) | O(1) | No | `ImprovedSimple[T]` |
+| Stooge | O(n^2.71) | O(n^2.71) | O(n^2.71) | O(n) | No | `Stooge[T]` |
+| Circle | O(n log n) | O(n log² n) | O(n log² n) | O(log n) | No | `Circle[T]` |
+| OddEven | O(n) | O(n²) | O(n²) | O(1) | Yes | `OddEvenSort[T]` |
+
+\* Binary Insertion reduces comparison count to O(n log n) but still requires O(n²) shifts.
+
+### Non-comparison sorts
+
+These algorithms exploit the structure of integer keys and can sort faster than O(n log n) for suitable inputs.
+
+| Algorithm | Time | Space | Stable | Constraint | Function |
+|---|---|---|---|---|---|
+| Counting | O(n + k) | O(n + k) | Yes | `constraints.Integer` | `Count[T]` |
+| Radix | O(n × k) | O(n) | Yes | `constraints.Integer` | `RadixSort[T]` |
+| Bucket | O(n + k) avg | O(n) | Yes | `constraints.Number` | `Bucket[T]` |
+| Pigeonhole | O(n + N) | O(N) | Yes | `constraints.Integer` | `Pigeonhole[T]` |
+
+*k = range of values, N = range of input*
+
+### Educational / novelty sorts
+
+| Algorithm | Typical time | Notes | Function |
+|---|---|---|---|
+| Bogo | O((n+1)!) worst | Shuffles randomly until sorted | `Bogo[T]` |
+
+## Choosing an algorithm
+
+<AccordionGroup>
+  <Accordion title="General-purpose sorting">
+    Use **Timsort** (`Timsort[T]`) for real-world data. It detects natural runs in the input, applying Insertion sort on small runs and Merge sort to combine them. It is stable and achieves O(n) on already-sorted data.
+
+    Use **Merge** (`Merge[T]`) when you need a guaranteed O(n log n) stable sort and can afford O(n) extra memory.
+
+    Use **Heap** (`HeapSort[T]`) when you need O(n log n) worst-case with O(1) space and stability is not required.
+  </Accordion>
+
+  <Accordion title="Small or nearly-sorted data">
+    **Insertion sort** (`Insertion[T]`) is optimal for tiny slices (< 20 elements) or input that is already mostly sorted. Its O(n) best case makes it ideal for nearly-sorted data.
+
+    **Binary Insertion sort** (`BinaryInsertion[T]`) reduces the number of comparisons by using binary search to locate the insertion point, which helps when comparisons are expensive.
+  </Accordion>
+
+  <Accordion title="Large datasets with parallelism available">
+    **ParallelMerge** (`ParallelMerge[T]`) uses goroutines to sort the two halves concurrently. It falls back to sequential `Merge` for slices smaller than 2048 elements to avoid goroutine overhead.
+  </Accordion>
+
+  <Accordion title="Integer data with known range">
+    **Counting sort** (`Count[T]`) is ideal when the range k of integer values is small relative to n. It runs in O(n + k) time.
+
+    **Pigeonhole sort** (`Pigeonhole[T]`) is similar to counting sort and well-suited for integer data with a small, bounded range.
+
+    **Radix sort** (`RadixSort[T]`) handles larger ranges of integers by sorting digit by digit. It handles negative numbers correctly.
+
+    **Bucket sort** (`Bucket[T]`) works well when values are uniformly distributed over a numeric range.
+  </Accordion>
+
+  <Accordion title="Minimising writes to storage">
+    **Cycle sort** (`Cycle[T]`) is theoretically optimal for the total number of writes to the original array. Useful when writes are far more expensive than reads (e.g., flash memory).
+  </Accordion>
+</AccordionGroup>
+
+## Explore further
+
+<CardGroup cols={2}>
+  <Card title="Comparison-based sorts" icon="arrow-up-wide-short" href="/algorithms/sorting/comparison-based">
+    Deep dive into Bubble, Insertion, Shell, Heap, Merge, Quick, Cocktail, Comb, Cycle, and more — with real signatures and Go examples.
+  </Card>
+  <Card title="Non-comparison sorts" icon="hashtag" href="/algorithms/sorting/non-comparison">
+    Counting, Radix, Bucket, Pigeonhole, and educational sorts (Bogo, Patience, Stooge, Pancake) with worked examples.
+  </Card>
+</CardGroup>

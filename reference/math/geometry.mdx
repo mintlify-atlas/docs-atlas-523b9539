@@ -1,0 +1,325 @@
+---
+title: "Geometry & Matrix"
+description: "Full function signatures and Go examples for 2D geometry, n-dimensional Euclidean distance, generic matrices, Pascal's triangle, and trig approximations in TheAlgorithms/Go."
+---
+
+<AccordionGroup>
+
+<Accordion title="2D Geometry">
+
+Import path: `github.com/TheAlgorithms/Go/math/geometry`
+
+### Types
+
+```go
+type Point struct {
+    X, Y float64
+}
+
+type Line struct {
+    P1, P2 Point
+}
+```
+
+### Distance
+
+```go
+func Distance(a, b *Point) float64
+```
+
+Returns the Euclidean distance between two `Point` values:
+`√((a.X−b.X)² + (a.Y−b.Y)²)`.
+
+```go
+import "github.com/TheAlgorithms/Go/math/geometry"
+
+a := &geometry.Point{X: 0, Y: 0}
+b := &geometry.Point{X: 3, Y: 4}
+fmt.Println(geometry.Distance(a, b)) // 5
+```
+
+### Slope
+
+```go
+func Slope(l *Line) float64
+```
+
+Returns the gradient (slope) of a line: `(P2.Y − P1.Y) / (P2.X − P1.X)`.
+
+```go
+l := &geometry.Line{
+    P1: geometry.Point{X: 0, Y: 0},
+    P2: geometry.Point{X: 4, Y: 2},
+}
+fmt.Println(geometry.Slope(l)) // 0.5
+```
+
+### Section
+
+```go
+func Section(p1, p2 *Point, r float64) Point
+```
+
+Returns the point that divides the segment `[p1, p2]` in the ratio `r : 1`
+(pass `r = m/n`, not `m` and `n` separately).
+
+```go
+p1 := &geometry.Point{X: 0, Y: 0}
+p2 := &geometry.Point{X: 4, Y: 4}
+mid := geometry.Section(p1, p2, 1.0) // r=1 → midpoint
+fmt.Println(mid) // {2 2}
+```
+
+### IsParallel
+
+```go
+func IsParallel(l1, l2 *Line) bool
+```
+
+Returns `true` when the two lines have equal slopes.
+
+```go
+l1 := &geometry.Line{P1: geometry.Point{0, 0}, P2: geometry.Point{1, 1}}
+l2 := &geometry.Line{P1: geometry.Point{0, 1}, P2: geometry.Point{1, 2}}
+fmt.Println(geometry.IsParallel(l1, l2)) // true
+```
+
+### IsPerpendicular
+
+```go
+func IsPerpendicular(l1, l2 *Line) bool
+```
+
+Returns `true` when `slope(l1) · slope(l2) == −1`.
+
+```go
+l1 := &geometry.Line{P1: geometry.Point{0, 0}, P2: geometry.Point{1, 1}}
+l2 := &geometry.Line{P1: geometry.Point{0, 0}, P2: geometry.Point{1, -1}}
+fmt.Println(geometry.IsPerpendicular(l1, l2)) // true
+```
+
+### PointDistance
+
+```go
+func PointDistance(p *Point, equation [3]float64) float64
+```
+
+Computes the perpendicular distance from point `p` to the line described
+by `equation[0]·x + equation[1]·y + equation[2] = 0`.
+
+```go
+p := &geometry.Point{X: 1, Y: 1}
+// Line: x + y - 2 = 0
+eq := [3]float64{1, 1, -2}
+fmt.Println(geometry.PointDistance(p, eq)) // 0
+```
+
+### YIntercept
+
+```go
+func YIntercept(p *Point, slope float64) float64
+```
+
+Returns the y-intercept `b` from `y = slope·x + b` given a point on the line.
+
+```go
+p := &geometry.Point{X: 2, Y: 5}
+fmt.Println(geometry.YIntercept(p, 2.0)) // 1  (5 - 2·2 = 1)
+```
+
+</Accordion>
+
+<Accordion title="Euclidean Distance (n-dimensional)">
+
+Import path: `github.com/TheAlgorithms/Go/math/geometry`
+
+### Type
+
+```go
+type EuclideanPoint []float64
+```
+
+A slice of coordinates representing a point in any number of dimensions.
+
+### EuclideanDistance
+
+```go
+func EuclideanDistance(p1 EuclideanPoint, p2 EuclideanPoint) (float64, error)
+```
+
+Returns the Euclidean distance between two points in n-dimensional space.
+Returns `ErrDimMismatch` when `len(p1) != len(p2)`.
+Time complexity: O(n) where n is the number of dimensions.
+
+```go
+import "github.com/TheAlgorithms/Go/math/geometry"
+
+p1 := geometry.EuclideanPoint{1, 2, 3}
+p2 := geometry.EuclideanPoint{4, 6, 3}
+d, err := geometry.EuclideanDistance(p1, p2)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println(d) // 5
+```
+
+<Note>
+Unlike `Distance` in `straightlines.go`, `EuclideanDistance` works for
+any number of dimensions — pass 2-element slices for 2D, 3-element for
+3D, and so on.
+</Note>
+
+</Accordion>
+
+<Accordion title="Matrix">
+
+Import path: `github.com/TheAlgorithms/Go/math/matrix`
+
+The `Matrix[T]` type is generic over `constraints.Integer`.
+
+### Types
+
+```go
+type Matrix[T constraints.Integer] struct { /* unexported fields */ }
+```
+
+### New
+
+```go
+func New[T constraints.Integer](rows, columns int, initial T) Matrix[T]
+```
+
+Creates a rows×columns matrix with every element set to `initial`.
+Returns an empty matrix for negative dimensions.
+
+```go
+import "github.com/TheAlgorithms/Go/math/matrix"
+
+m := matrix.New[int](3, 3, 0)
+fmt.Println(m.Rows(), m.Columns()) // 3 3
+```
+
+### NewFromElements
+
+```go
+func NewFromElements[T constraints.Integer](elements [][]T) (Matrix[T], error)
+```
+
+Creates a matrix from an existing 2D slice. Returns an error if rows have
+different lengths.
+
+```go
+elems := [][]int{
+    {1, 2, 3},
+    {4, 5, 6},
+}
+m, err := matrix.NewFromElements(elems)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println(m.Rows(), m.Columns()) // 2 3
+```
+
+### IsValid
+
+`IsValid` is used internally by `NewFromElements` to verify that all rows
+have the same number of columns before constructing the matrix.
+
+### Get / Set
+
+```go
+func (m Matrix[T]) Get(row, col int) (T, error)
+func (m Matrix[T]) Set(row, col int, val T) error
+```
+
+Access individual elements. Both return an error for out-of-range indices.
+
+```go
+v, _ := m.Get(0, 1)
+fmt.Println(v) // 2
+```
+
+</Accordion>
+
+<Accordion title="Pascal's Triangle">
+
+Import path: `github.com/TheAlgorithms/Go/math/pascal`
+
+### GenerateTriangle
+
+```go
+func GenerateTriangle(n int) [][]int
+```
+
+Generates the first `n` rows of Pascal's triangle as a jagged slice.
+Row `i` has `i+1` elements. Time and space complexity: O(n²).
+
+```go
+import "github.com/TheAlgorithms/Go/math/pascal"
+
+tri := pascal.GenerateTriangle(5)
+for _, row := range tri {
+    fmt.Println(row)
+}
+// [1]
+// [1 1]
+// [1 2 1]
+// [1 3 3 1]
+// [1 4 6 4 1]
+```
+
+<Tip>
+Each entry `tri[i][j]` equals the binomial coefficient C(i, j).
+You can use `GenerateTriangle` to look up binomial coefficients in O(1)
+after an O(n²) build phase.
+</Tip>
+
+</Accordion>
+
+<Accordion title="Trigonometric Approximations">
+
+Import path: `github.com/TheAlgorithms/Go/math`
+
+### Cos
+
+```go
+func Cos(x float64) float64
+```
+
+Returns an approximation of cos(x) (x in radians) based on the
+Bhaskara I cosine approximation formula, with an extra precision term.
+
+```go
+import gomath "github.com/TheAlgorithms/Go/math"
+
+fmt.Println(gomath.Cos(0))            // ≈ 1
+fmt.Println(gomath.Cos(math.Pi / 2)) // ≈ 0
+```
+
+### Sin
+
+```go
+func Sin(x float64) float64
+```
+
+Returns an approximation of sin(x) (x in radians) by delegating to `Cos`:
+
+```go
+// Sin(x) = Cos(π/2 − x)
+func Sin(x float64) float64 { return Cos((math.Pi / 2) - x) }
+```
+
+```go
+fmt.Println(gomath.Sin(0))            // ≈ 0
+fmt.Println(gomath.Sin(math.Pi / 2)) // ≈ 1
+```
+
+<Note>
+Both `Cos` and `Sin` are polynomial approximations intended for
+educational purposes. For production use, prefer the standard library's
+`math.Cos` and `math.Sin`, which provide full IEEE 754 accuracy.
+</Note>
+
+</Accordion>
+
+</AccordionGroup>

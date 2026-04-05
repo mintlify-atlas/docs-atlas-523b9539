@@ -1,0 +1,347 @@
+---
+title: Contributing
+description: How to add new algorithms, meet the code style requirements, write tests, and submit a pull request to TheAlgorithms/Go.
+---
+
+Welcome to TheAlgorithms/Go. Before you open a pull request, read this guide in full. It covers file naming, code style, GoDoc conventions, test requirements, and the PR process.
+
+<Note>
+  Your contribution will be distributed under the [MIT License](https://github.com/TheAlgorithms/Go/blob/master/LICENSE) once it is merged.
+</Note>
+
+## Before you start
+
+- **Do your own work.** Plagiarism is not accepted. Any copied implementation will not be merged.
+- **Check whether the algorithm already exists.** If it does and your version is different, follow the file naming rules for duplicates below.
+- **Do not open issues asking to be "assigned"** to an algorithm. Submit your implementation directly in a pull request.
+
+## File naming
+
+<Warning>
+  File name validation runs on CI. Non-compliant names will fail the check.
+</Warning>
+
+Use lowercase letters only, with no underscores or spaces in the base name. Underscores are only permitted for the `_test.go` and `_bench.go` suffixes.
+
+| Example | Valid? |
+|---|---|
+| `MyNewGoFile.GO` | No |
+| `my_new_go_file.go` | No |
+| `mynewgofile.go` | Yes |
+| `mynewgofile_test.go` | Yes |
+
+If an implementation already exists, append an incremental number:
+
+```
+search/binarysearch.go   ← existing
+search/binarysearch2.go  ← your alternative implementation
+search/binarysearch3.go  ← a third implementation
+```
+
+## Directory naming
+
+Add files to existing directories wherever possible. If you must create a new directory, use lowercase letters with underscores as separators. Spaces and hyphens are not allowed.
+
+```
+SomeNew Fancy-Category    ← incorrect
+some_new_fancy_category   ← correct
+```
+
+## Code requirements
+
+- Use the existing directory structure. Match the package name to the directory.
+- File extensions must be `*.go`.
+- Use meaningful variable names.
+- Use only the Go standard library. Do not import packages from external modules.
+- All code must compile before you submit.
+- Packages must not be `main` and must not implement a `main` function.
+- Format your code with `gofmt` before submitting. The repository CI enforces this.
+
+## Code style
+
+### Formatting
+
+All Go code must be formatted with the official tool:
+
+```bash
+gofmt -w yourfile.go
+# or for a whole package:
+go fmt ./yourpackage/
+```
+
+### Comments
+
+Prefer C++ style line comments over C-style block comments.
+
+<CodeGroup>
+
+```go bad-style.go
+/*
+  Unmarshal converts a JSON string into a go interface
+  ...
+*/
+```
+
+```go good-style.go
+// Unmarshal converts a JSON string into a go interface
+// ...
+```
+
+</CodeGroup>
+
+### Package comments
+
+Package comments must start with the word "Package" followed by the package name. For packages spanning many files, put the package comment in a `doc.go` file.
+
+<CodeGroup>
+
+```go bad-style.go
+// sort is a package which implements sorting functions.
+package sort
+```
+
+```go good-style.go
+// Package sort implements sorting functions.
+package sort
+```
+
+</CodeGroup>
+
+### Documentation comments
+
+Every exported symbol must have a GoDoc comment. The comment must start with the symbol name.
+
+<CodeGroup>
+
+```go bad-style.go
+// Function Quick is an implementation
+// of the Quicksort algorithm.
+func Quick[T constraints.Ordered](arr []T) []T { ... }
+```
+
+```go good-style.go
+// Quick is an implementation
+// of the Quicksort algorithm.
+func Quick[T constraints.Ordered](arr []T) []T { ... }
+```
+
+</CodeGroup>
+
+### Author comments
+
+You may add an author comment at the top of the file. It must appear before the package declaration and be separated from it by a blank line so that it is not included in the package documentation.
+
+<CodeGroup>
+
+```go bad-style.go
+// author: Your Name (@handle)
+package sort
+```
+
+```go good-style.go
+// author: Your Name (@handle)
+
+package sort
+```
+
+</CodeGroup>
+
+### Naming conventions
+
+| Symbol | Convention | Example |
+|---|---|---|
+| Package | Lowercase, single word | `sort`, `linkedlist` |
+| Exported symbols | `PascalCase` | `BubbleSort`, `NewTree` |
+| Unexported symbols | `camelCase` | `swapped`, `midIndex` |
+| Acronyms | Consistent case | `JSON` or `json`, not `Json` |
+| Constructor (pointer) | `New<Type>()` | `NewSingly()`, `NewLRU()` |
+| Constructor (value) | `Make<Type>()` | `Make()` |
+| Getter | Field name | `user.Name()` not `user.GetName()` |
+| Setter | `Set<Field>` | `user.SetName()` |
+| Interface | `<Method>er` | `Writer`, `Reader` |
+
+## Typical file structure
+
+Every file should follow this structure. The file-level block comment is not part of the package documentation — it documents the algorithm itself.
+
+```go
+// bubblesort.go
+// description: Add one line description here
+// details:
+// This is a multi-line
+// description containing links, references,
+// math equations, etc.
+// reference: https://en.wikipedia.org/wiki/Bubble_sort
+// author(s): [Name](https://github.com/handle)
+// see bubblesort_test.go
+
+// Package sort a package for demonstrating sorting algorithms in Go
+package sort
+
+import "github.com/TheAlgorithms/Go/constraints"
+
+// Bubble is a simple generic definition of Bubble sort algorithm.
+func Bubble[T constraints.Ordered](arr []T) []T {
+    swapped := true
+    for swapped {
+        swapped = false
+        for i := 0; i < len(arr)-1; i++ {
+            if arr[i+1] < arr[i] {
+                arr[i+1], arr[i] = arr[i], arr[i+1]
+                swapped = true
+            }
+        }
+    }
+    return arr
+}
+```
+
+## Adding a new algorithm
+
+<Steps>
+  <Step title="Choose the right package">
+    Find the directory that best fits your algorithm. Check existing directories before creating a new one. Most algorithms fit into `sort/`, `search/`, `graph/`, `dynamic/`, `math/`, `structure/`, `cipher/`, or `strings/`.
+  </Step>
+  <Step title="Create the implementation file">
+    Name the file using the lowercase-only convention described above. Add the file-level comment block, the package declaration, and your implementation with GoDoc comments.
+
+    ```go
+    // insertionsort.go
+    // description: Insertion sort algorithm
+    // reference: https://en.wikipedia.org/wiki/Insertion_sort
+
+    // Package sort a package for demonstrating sorting algorithms in Go
+    package sort
+
+    import "github.com/TheAlgorithms/Go/constraints"
+
+    // Insertion sorts a slice using the insertion sort algorithm.
+    func Insertion[T constraints.Ordered](arr []T) []T {
+        for i := 1; i < len(arr); i++ {
+            key := arr[i]
+            j := i - 1
+            for j >= 0 && arr[j] > key {
+                arr[j+1] = arr[j]
+                j--
+            }
+            arr[j+1] = key
+        }
+        return arr
+    }
+    ```
+  </Step>
+  <Step title="Create the test file">
+    Create `yourfile_test.go` in the same directory. Use black-box testing by appending `_test` to the package name.
+
+    ```go
+    package sort_test
+
+    import (
+        "testing"
+        "github.com/TheAlgorithms/Go/sort"
+    )
+
+    func TestInsertion(t *testing.T) {
+        tests := []struct {
+            input    []int
+            expected []int
+            name     string
+        }{
+            {[]int{5, 3, 1, 4, 2}, []int{1, 2, 3, 4, 5}, "unsorted"},
+            {[]int{1, 2, 3, 4, 5}, []int{1, 2, 3, 4, 5}, "already sorted"},
+            {[]int{5, 4, 3, 2, 1}, []int{1, 2, 3, 4, 5}, "reverse sorted"},
+            {[]int{}, []int{}, "empty"},
+            {[]int{1}, []int{1}, "singleton"},
+        }
+        for _, tt := range tests {
+            t.Run(tt.name, func(t *testing.T) {
+                got := sort.Insertion(tt.input)
+                for i, v := range got {
+                    if v != tt.expected[i] {
+                        t.Errorf("Insertion() = %v, want %v", got, tt.expected)
+                    }
+                }
+            })
+        }
+    }
+    ```
+  </Step>
+  <Step title="Add benchmarks">
+    Add benchmark functions to the test file (or a separate `_bench.go` file). Benchmarks let maintainers compare implementations.
+
+    ```go
+    func BenchmarkInsertion(b *testing.B) {
+        input := []int{10, 9, 8, 7, 6, 5, 4, 3, 2, 1}
+        b.ResetTimer()
+        for i := 0; i < b.N; i++ {
+            sort.Insertion(input)
+        }
+    }
+    ```
+
+    Run with:
+
+    ```bash
+    go test -bench=BenchmarkInsertion ./sort
+    ```
+  </Step>
+  <Step title="Verify everything passes">
+    Build and test locally before opening a PR:
+
+    ```bash
+    go build ./...
+    go test ./...
+    gofmt -l .   # should print nothing if all files are formatted
+    ```
+  </Step>
+</Steps>
+
+## Tests
+
+- Every implementation file must have a corresponding `filename_test.go`.
+- Test functions must invoke the algorithm on multiple inputs, including edge cases (empty slice, single element, already-sorted input, reverse-sorted input).
+- Use subtests (`t.Run`) to give each case a descriptive name.
+- If you find an algorithm without tests, you can open a PR that adds tests only.
+
+## Linting
+
+The repository runs `golangci-lint` on all pull requests. You can run it locally with:
+
+```bash
+golangci-lint run ./...
+```
+
+The configuration lives in `.golangci.yml` at the root of the repository. Fix all reported issues before submitting.
+
+## Commit messages
+
+Keep commits logically grouped. Prefer small, focused commits over large, mixed ones. Use semantic prefixes:
+
+```
+feat: add shell sort implementation
+fix: correct off-by-one error in binary search
+test: add edge case tests for bubble sort
+docs: add GoDoc comment to Knapsack function
+```
+
+Stage and commit one or two files at a time:
+
+```bash
+git add sort/shellsort.go sort/shellsort_test.go
+git commit -m "feat: add shell sort implementation"
+```
+
+## Pull requests
+
+1. **Enable GitHub Actions** on your fork. After each push, the `golang_lint_and_test` workflow runs automatically. Wait for it to pass before asking for a review.
+2. If the workflow makes changes on your behalf (e.g., auto-formatting), run `git pull` in your local clone before pushing again to avoid merge conflicts.
+3. Use the [pull request template](https://github.com/TheAlgorithms/Go/blob/master/.github/PULL_REQUEST_TEMPLATE/pull_request.md) when opening your PR.
+4. Do not update `README.md` in the same PR as an algorithm change. Open a separate issue first and link to it.
+
+<Warning>
+  Pull requests that span multiple unrelated directories are often rejected. Keep your changes focused on a single algorithm or a closely related set of files.
+</Warning>
+
+## Community
+
+If you have questions about these guidelines, open an [issue](https://github.com/TheAlgorithms/Go/issues/new/choose) or ask in the [Discord server](https://the-algorithms.com/discord/).

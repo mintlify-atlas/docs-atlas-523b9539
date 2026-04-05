@@ -1,0 +1,200 @@
+---
+title: "Minimum Spanning Trees"
+description: "Kruskal's algorithm, Prim's algorithm, and the Union-Find data structure for computing minimum spanning trees in weighted undirected graphs."
+---
+
+A minimum spanning tree (MST) of a weighted undirected graph is a spanning tree whose total edge weight is as small as possible. The `graph` package provides two classic MST algorithms — Kruskal's and Prim's — both backed by the `Edge` and `UnionFind` types defined in the package.
+
+## Shared types
+
+Both MST algorithms use the `Edge` and `Vertex` types:
+
+```go
+type Vertex int
+
+type Edge struct {
+    Start  Vertex
+    End    Vertex
+    Weight int
+}
+```
+
+## Algorithm comparison
+
+| | Kruskal | Prim |
+|--|---------|------|
+| **Strategy** | Edge-based (greedy sort) | Vertex-based (priority queue) |
+| **Data structure** | Union-Find | Binary min-heap |
+| **Time complexity** | O(E log E) | O(E log V) |
+| **Space complexity** | O(V + E) | O(V + E) |
+| **Best for** | Sparse graphs | Dense graphs |
+| **Input format** | Edge list | Adjacency map (`*Graph`) |
+
+<AccordionGroup>
+
+  <Accordion title="Union-Find">
+
+Union-Find (also called Disjoint Set Union) is a data structure for tracking connected components. It supports two near-constant-time operations: `Find` (path compression) and `Union` (union by rank). Kruskal's algorithm uses it internally to detect cycles while building the MST.
+
+**Signatures**
+
+```go
+func NewUnionFind(s int) UnionFind
+
+func (u *UnionFind) Find(q int) int
+
+func (u *UnionFind) Union(p, q int)
+```
+
+- `NewUnionFind(s)` — creates a new Union-Find with `s` elements (labelled `0` to `s-1`)
+- `Find(q)` — returns the root representative of the set containing `q`; applies path compression
+- `Union(p, q)` — merges the sets of `p` and `q`; uses union by rank to keep trees flat
+
+**Complexity**
+
+| Operation | Time | Space |
+|-----------|------|-------|
+| `NewUnionFind` | O(n) | O(n) |
+| `Find` | O(α(n)) amortized | O(1) |
+| `Union` | O(α(n)) amortized | O(1) |
+
+α(n) is the inverse Ackermann function — effectively constant for all practical values of n.
+
+**Example**
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/TheAlgorithms/Go/graph"
+)
+
+func main() {
+    uf := graph.NewUnionFind(5) // five elements: 0, 1, 2, 3, 4
+
+    uf.Union(0, 1)
+    uf.Union(1, 2)
+
+    fmt.Println(uf.Find(0) == uf.Find(2)) // true  — same component
+    fmt.Println(uf.Find(0) == uf.Find(3)) // false — different components
+
+    uf.Union(3, 4)
+    fmt.Println(uf.Find(3) == uf.Find(4)) // true
+}
+```
+
+  </Accordion>
+
+  <Accordion title="Kruskal's Algorithm">
+
+Kruskal's algorithm builds the MST by sorting all edges by weight and greedily adding the lightest edge that does not create a cycle. Cycle detection is performed in near-constant time using Union-Find.
+
+**Signature**
+
+```go
+func KruskalMST(n int, edges []Edge) ([]Edge, int)
+```
+
+- `n` — number of vertices
+- `edges` — all graph edges as a list of `Edge{Start, End, Weight}`
+- Returns `(mst, totalCost)` where `mst` is the list of edges in the MST and `totalCost` is their combined weight
+
+**Complexity**
+
+| | |
+|--|--|
+| Time | O(E log E) — dominated by the sort |
+| Space | O(V + E) |
+
+**Example**
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/TheAlgorithms/Go/graph"
+)
+
+func main() {
+    edges := []graph.Edge{
+        {Start: 0, End: 1, Weight: 4},
+        {Start: 0, End: 2, Weight: 3},
+        {Start: 1, End: 2, Weight: 1},
+        {Start: 1, End: 3, Weight: 2},
+        {Start: 2, End: 3, Weight: 4},
+    }
+
+    mst, cost := graph.KruskalMST(4, edges)
+    fmt.Println("Total MST cost:", cost) // 6
+    for _, e := range mst {
+        fmt.Printf("  %d — %d  weight %d\n", e.Start, e.End, e.Weight)
+    }
+    // 1 — 2  weight 1
+    // 1 — 3  weight 2
+    // 0 — 2  weight 3
+}
+```
+
+<Tip>
+Kruskal's works well on sparse graphs since it only needs to sort the edge list. For dense graphs where E ≈ V², prefer Prim's algorithm.
+</Tip>
+
+  </Accordion>
+
+  <Accordion title="Prim's Algorithm">
+
+Prim's algorithm grows the MST from a starting vertex by repeatedly selecting the minimum-weight edge that connects a visited vertex to an unvisited one. It uses a binary min-heap to efficiently pick the next edge.
+
+**Signature**
+
+```go
+func (g *Graph) PrimMST(start Vertex) ([]Edge, int)
+```
+
+- `g` — undirected weighted `*Graph`
+- `start` — the vertex from which to begin growing the MST
+- Returns `(mst, totalCost)` where `mst` is the list of edges added and `totalCost` is their combined weight
+
+**Complexity**
+
+| | |
+|--|--|
+| Time | O(E log V) |
+| Space | O(V + E) |
+
+**Example**
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/TheAlgorithms/Go/graph"
+)
+
+func main() {
+    g := graph.New(4)
+    // g is undirected by default
+    g.AddWeightedEdge(0, 1, 4)
+    g.AddWeightedEdge(0, 2, 3)
+    g.AddWeightedEdge(1, 2, 1)
+    g.AddWeightedEdge(1, 3, 2)
+    g.AddWeightedEdge(2, 3, 4)
+
+    mst, cost := g.PrimMST(graph.Vertex(0))
+    fmt.Println("Total MST cost:", cost) // 6
+    for _, e := range mst {
+        fmt.Printf("  %d — %d  weight %d\n", e.Start, e.End, e.Weight)
+    }
+}
+```
+
+<Note>
+`PrimMST` starts from the given vertex but only spans the connected component containing that vertex. For disconnected graphs, call `PrimMST` from a vertex in each component.
+</Note>
+
+  </Accordion>
+
+</AccordionGroup>

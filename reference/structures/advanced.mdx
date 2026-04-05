@@ -1,0 +1,280 @@
+---
+title: "Heap, HashMap & Set"
+description: "API reference for the generic heap, hash map, set, LRU cache, and LFU cache in TheAlgorithms/Go."
+---
+
+<AccordionGroup>
+
+  <Accordion title="Heap">
+
+Package: `github.com/TheAlgorithms/Go/structure/heap`
+
+A generic min-heap backed by a slice. Two constructors are provided: `New` for any `constraints.Ordered` type, and `NewAny` for arbitrary types with a custom comparator.
+
+**Signatures**
+
+```go
+// New creates a min-heap for any ordered type (int, float64, string, …)
+func New[T constraints.Ordered]() *Heap[T]
+
+// NewAny creates a heap for any type; caller supplies the less function.
+func NewAny[T any](less func(a, b T) bool) (*Heap[T], error)
+
+func (h *Heap[T]) Push(t T)
+func (h *Heap[T]) Pop()          // removes the minimum element
+func (h *Heap[T]) Top() T        // returns the minimum element; panics if empty
+func (h *Heap[T]) Empty() bool
+func (h *Heap[T]) Size() int
+```
+
+| Operation | Complexity |
+|---|---|
+| Push | O(log n) |
+| Pop | O(log n) |
+| Top | O(1) |
+
+**Example — ordered heap**
+
+```go
+import "github.com/TheAlgorithms/Go/structure/heap"
+
+h := heap.New[int]()
+h.Push(5)
+h.Push(1)
+h.Push(3)
+
+fmt.Println(h.Top())  // 1  (minimum)
+h.Pop()
+fmt.Println(h.Top())  // 3
+fmt.Println(h.Size()) // 2
+```
+
+**Example — custom comparator (max-heap)**
+
+```go
+import "github.com/TheAlgorithms/Go/structure/heap"
+
+maxHeap, err := heap.NewAny[int](func(a, b int) bool {
+    return a > b // reverse the order for a max-heap
+})
+if err != nil {
+    log.Fatal(err)
+}
+
+maxHeap.Push(5)
+maxHeap.Push(1)
+maxHeap.Push(9)
+
+fmt.Println(maxHeap.Top()) // 9
+```
+
+**Example — struct heap**
+
+```go
+import "github.com/TheAlgorithms/Go/structure/heap"
+
+type Task struct {
+    Priority int
+    Name     string
+}
+
+h, _ := heap.NewAny[Task](func(a, b Task) bool {
+    return a.Priority < b.Priority
+})
+
+h.Push(Task{Priority: 3, Name: "low"})
+h.Push(Task{Priority: 1, Name: "high"})
+h.Push(Task{Priority: 2, Name: "medium"})
+
+fmt.Println(h.Top().Name) // "high"
+```
+
+  </Accordion>
+
+  <Accordion title="HashMap">
+
+Package: `github.com/TheAlgorithms/Go/structure/hashmap`
+
+A hash map with separate chaining for collision resolution. Uses FNV-64a hashing. The map automatically resizes (doubles capacity) when the load factor exceeds 0.75.
+
+**Signatures**
+
+```go
+// DefaultNew returns a HashMap with default capacity (1024).
+func DefaultNew() *HashMap
+
+// New returns a HashMap with an explicit initial size and capacity.
+func New(size, capacity uint64) *HashMap
+
+func (hm *HashMap) Put(key, value any)
+func (hm *HashMap) Get(key any) any
+func (hm *HashMap) Contains(key any) bool
+```
+
+| Operation | Average complexity |
+|---|---|
+| Put | O(1) |
+| Get | O(1) |
+| Contains | O(1) |
+
+**Example**
+
+```go
+import "github.com/TheAlgorithms/Go/structure/hashmap"
+
+hm := hashmap.DefaultNew()
+hm.Put("name", "Alice")
+hm.Put("age", 30)
+hm.Put("active", true)
+
+fmt.Println(hm.Get("name"))      // Alice
+fmt.Println(hm.Contains("age"))  // true
+fmt.Println(hm.Get("missing"))   // nil
+```
+
+<Note>
+Keys and values are typed as `any`. Equality comparison for keys uses `==`, so composite types like slices cannot be used as keys (the same restriction as built-in Go maps).
+</Note>
+
+  </Accordion>
+
+  <Accordion title="Set">
+
+Package: `github.com/TheAlgorithms/Go/structure/set`
+
+A generic set backed by a `map[T]bool`. Only `comparable` types are allowed as elements (same constraint as Go map keys).
+
+**Interface**
+
+```go
+func New[T comparable](items ...T) Set[T]
+
+type Set[T comparable] interface {
+    Add(item T)
+    Delete(item T)
+    Len() int
+    GetItems() []T
+    In(item T) bool
+    IsSubsetOf(set2 Set[T]) bool
+    IsProperSubsetOf(set2 Set[T]) bool
+    IsSupersetOf(set2 Set[T]) bool
+    IsProperSupersetOf(set2 Set[T]) bool
+    Union(set2 Set[T]) Set[T]
+    Intersection(set2 Set[T]) Set[T]
+    Difference(set2 Set[T]) Set[T]
+    SymmetricDifference(set2 Set[T]) Set[T]
+}
+```
+
+**Example**
+
+```go
+import "github.com/TheAlgorithms/Go/structure/set"
+
+a := set.New(1, 2, 3, 4)
+b := set.New(3, 4, 5, 6)
+
+fmt.Println(a.In(3))                          // true
+fmt.Println(a.Intersection(b).GetItems())     // [3 4] (order may vary)
+fmt.Println(a.Difference(b).GetItems())       // [1 2]
+fmt.Println(a.Union(b).Len())                 // 6
+fmt.Println(a.SymmetricDifference(b).Len())   // 4
+
+a.Delete(1)
+fmt.Println(a.IsSubsetOf(b)) // false (2 is not in b)
+```
+
+<Tip>
+`GetItems()` returns elements in non-deterministic order because the backing type is a Go map. Sort the result if a consistent order is required.
+</Tip>
+
+  </Accordion>
+
+  <Accordion title="LRU cache">
+
+Package: `github.com/TheAlgorithms/Go/cache`
+
+A Least Recently Used cache. When the cache is full, the item that was accessed least recently is evicted. Internally uses a doubly linked list and a hash map for O(1) access.
+
+**Signatures**
+
+```go
+func NewLRU(capacity int) LRU
+
+func (c *LRU) Get(key string) any  // returns nil if not found
+func (c *LRU) Put(key string, value any)
+```
+
+| Operation | Complexity |
+|---|---|
+| Get | O(1) |
+| Put | O(1) |
+
+**Example**
+
+```go
+import "github.com/TheAlgorithms/Go/cache"
+
+lru := cache.NewLRU(3)
+
+lru.Put("a", 1)
+lru.Put("b", 2)
+lru.Put("c", 3)
+
+_ = lru.Get("a") // "a" is now most recently used
+
+lru.Put("d", 4) // evicts "b" (least recently used)
+
+fmt.Println(lru.Get("b")) // nil  (evicted)
+fmt.Println(lru.Get("a")) // 1
+fmt.Println(lru.Get("d")) // 4
+```
+
+  </Accordion>
+
+  <Accordion title="LFU cache">
+
+Package: `github.com/TheAlgorithms/Go/cache`
+
+A Least Frequently Used cache. When the cache is full, the item with the lowest access count is evicted. Ties are broken by evicting the least recently used among items with equal frequency.
+
+**Signatures**
+
+```go
+func NewLFU(capacity int) LFU
+
+func (c *LFU) Get(key string) any  // returns nil if not found; increments frequency
+func (c *LFU) Put(key string, value any)
+```
+
+| Operation | Complexity |
+|---|---|
+| Get | O(n) |
+| Put | O(n) |
+
+**Example**
+
+```go
+import "github.com/TheAlgorithms/Go/cache"
+
+lfu := cache.NewLFU(2)
+
+lfu.Put("x", 10)
+lfu.Put("y", 20)
+
+_ = lfu.Get("x") // freq("x") = 2, freq("y") = 1
+
+lfu.Put("z", 30) // evicts "y" (lowest frequency)
+
+fmt.Println(lfu.Get("y")) // nil  (evicted)
+fmt.Println(lfu.Get("x")) // 10
+fmt.Println(lfu.Get("z")) // 30
+```
+
+<Note>
+LFU eviction has O(n) time complexity in this implementation. For performance-critical workloads with large caches consider the LRU cache instead, which provides O(1) eviction.
+</Note>
+
+  </Accordion>
+
+</AccordionGroup>

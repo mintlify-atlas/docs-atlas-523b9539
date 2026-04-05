@@ -1,0 +1,100 @@
+---
+title: "Compression"
+description: "Educational implementation of Huffman coding for lossless data compression in Go."
+---
+
+Huffman coding is a lossless data compression algorithm that assigns variable-length binary codes to symbols based on their frequency of occurrence. More frequent symbols receive shorter codes, and less frequent symbols receive longer codes, producing an optimal prefix-free encoding.
+
+The implementation uses the linear-time two-queue method: symbols are sorted by frequency, placed in the first queue, and merged nodes are placed in a second queue. The algorithm always picks the two nodes with the lowest weight from either queue, producing the optimal tree in O(n) time given a pre-sorted input.
+
+<Note>
+  `HuffTree` requires the input `listfreq` slice to be sorted in ascending order by frequency. Results are undefined for unsorted input.
+</Note>
+
+**Types**
+
+```go
+// Node is a node in the Huffman tree. Leaf nodes store a symbol; internal
+// nodes have left and right children and symbol == -1.
+type Node struct {
+    // unexported fields: left, right *Node, symbol rune, weight int
+}
+
+// SymbolFreq pairs a symbol with its frequency of occurrence.
+type SymbolFreq struct {
+    Symbol rune
+    Freq   int
+}
+```
+
+<AccordionGroup>
+  <Accordion title="Huffman Coding">
+    Four functions make up the full Huffman encode/decode pipeline:
+
+    **`HuffTree`** — builds the Huffman tree from a frequency table.
+
+    ```go
+    func HuffTree(listfreq []SymbolFreq) (*Node, error)
+    ```
+
+    **`HuffEncoding`** — traverses the tree to produce a code map from each symbol to its bit sequence. Left branches are `false`, right branches are `true`.
+
+    ```go
+    func HuffEncoding(node *Node, prefix []bool, codes map[rune][]bool)
+    ```
+
+    **`HuffEncode`** — encodes a string using the code map produced by `HuffEncoding`.
+
+    ```go
+    func HuffEncode(codes map[rune][]bool, in string) []bool
+    ```
+
+    **`HuffDecode`** — decodes a bit sequence back to a string by traversing the tree.
+
+    ```go
+    func HuffDecode(root, current *Node, in []bool, out string) string
+    ```
+
+    **Complete encode/decode example**
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        "github.com/TheAlgorithms/Go/compression"
+    )
+
+    func main() {
+        // Step 1: define symbol frequencies, sorted ascending by Freq
+        freqs := []compression.SymbolFreq{
+            {Symbol: 'c', Freq: 1},
+            {Symbol: 'b', Freq: 2},
+            {Symbol: 'a', Freq: 5},
+        }
+
+        // Step 2: build the Huffman tree
+        root, err := compression.HuffTree(freqs)
+        if err != nil {
+            panic(err)
+        }
+
+        // Step 3: derive the code map from the tree
+        codes := make(map[rune][]bool)
+        compression.HuffEncoding(root, []bool{}, codes)
+
+        // Step 4: encode a string
+        encoded := compression.HuffEncode(codes, "abac")
+        fmt.Println("Encoded bits:", encoded)
+
+        // Step 5: decode the bit sequence back to a string
+        decoded := compression.HuffDecode(root, root, encoded, "")
+        fmt.Println("Decoded:", decoded) // abac
+    }
+    ```
+
+    <Tip>
+      Call `HuffEncoding` with an empty `[]bool{}` prefix and a freshly allocated `map[rune][]bool{}`. The function populates the map in-place by recursing through the tree.
+    </Tip>
+  </Accordion>
+</AccordionGroup>

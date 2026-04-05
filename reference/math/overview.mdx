@@ -1,0 +1,44 @@
+---
+title: "Math & Number Theory"
+description: "A comprehensive reference for the math packages in TheAlgorithms/Go, covering number theory, geometry, statistics, and more."
+---
+
+The `math` package in TheAlgorithms/Go provides pure-Go implementations of mathematical
+algorithms across number theory, computational geometry, linear algebra, and statistics.
+All packages are importable independently so you only pull in what you need.
+
+## Package index
+
+| Package | Import path | Key functions |
+|---|---|---|
+| `math` | `github.com/TheAlgorithms/Go/math` | `Abs`, `Mean`, `Median`, `Mode`, `Cos`, `Sin`, `Lerp` |
+| `math/prime` | `github.com/TheAlgorithms/Go/math/prime` | `TrialDivision`, `OptimizedTrialDivision`, `MillerRabinDeterministic`, `Generate` |
+| `math/gcd` | `github.com/TheAlgorithms/Go/math/gcd` | `Recursive`, `Iterative`, `ExtendedRecursive` |
+| `math/lcm` | `github.com/TheAlgorithms/Go/math/lcm` | `Lcm` |
+| `math/modular` | `github.com/TheAlgorithms/Go/math/modular` | `Exponentiation`, `Inverse` |
+| `math/factorial` | `github.com/TheAlgorithms/Go/math/factorial` | `Iterative`, `Recursive`, `UsingTree` |
+| `math/fibonacci` | `github.com/TheAlgorithms/Go/math/fibonacci` | `Matrix`, `Formula`, `Recursive` |
+| `math/binary` | `github.com/TheAlgorithms/Go/math/binary` | `IsPowerOfTwo`, `BitCounter`, `Abs` |
+| `math/power` | `github.com/TheAlgorithms/Go/math/power` | `IterativePower`, `RecursivePower` |
+| `math/geometry` | `github.com/TheAlgorithms/Go/math/geometry` | `Distance`, `Slope`, `EuclideanDistance` |
+| `math/matrix` | `github.com/TheAlgorithms/Go/math/matrix` | `New`, `NewFromElements` |
+| `math/pascal` | `github.com/TheAlgorithms/Go/math/pascal` | `GenerateTriangle` |
+
+## Explore the reference
+
+<CardGroup cols={2}>
+  <Card
+    title="Number Theory Reference"
+    icon="hashtag"
+    href="/reference/math/number-theory"
+  >
+    Primes, GCD/LCM, modular arithmetic, factorial, Fibonacci, binary math, and statistics — with full function signatures and Go examples.
+  </Card>
+  <Card
+    title="Geometry & Matrix"
+    icon="shapes"
+    href="/reference/math/geometry"
+  >
+    2D straight-line geometry, n-dimensional Euclidean distance, generic matrices, Pascal's triangle, and trig approximations.
+  </Card>
+</CardGroup>

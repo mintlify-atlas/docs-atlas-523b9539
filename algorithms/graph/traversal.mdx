@@ -1,0 +1,418 @@
+---
+title: "Graph Traversal"
+description: "BFS, DFS, topological sort (Kahn's algorithm), articulation points, cycle detection, Kosaraju's strongly connected components, and lowest common ancestor."
+---
+
+Traversal algorithms systematically visit every vertex in a graph. This page covers all traversal and structural analysis algorithms provided by the `graph` package.
+
+<AccordionGroup>
+
+  <Accordion title="Breadth-First Search (BFS)">
+
+BFS explores vertices level by level, visiting all neighbors at the current depth before moving deeper. It returns whether a path exists between two vertices and the shortest hop-count distance.
+
+**Signature**
+
+```go
+func BreadthFirstSearch(start, end, nodes int, edges [][]int) (isConnected bool, distance int)
+```
+
+- `start` — source vertex index
+- `end` — target vertex index
+- `nodes` — total number of vertices
+- `edges` — adjacency matrix where `edges[u][v] > 0` means an edge from `u` to `v`
+
+**Complexity**
+
+| | |
+|--|--|
+| Time | O(V + E) |
+| Space | O(V) |
+
+**Example**
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/TheAlgorithms/Go/graph"
+)
+
+func main() {
+    // Adjacency matrix for a 4-node graph: 0-1-2-3
+    edges := [][]int{
+        {0, 1, 0, 0},
+        {1, 0, 1, 0},
+        {0, 1, 0, 1},
+        {0, 0, 1, 0},
+    }
+    connected, dist := graph.BreadthFirstSearch(0, 3, 4, edges)
+    fmt.Println(connected, dist) // true 3
+}
+```
+
+<Tip>
+BFS guarantees the shortest unweighted path. For weighted shortest paths, use Dijkstra or Bellman-Ford instead.
+</Tip>
+
+  </Accordion>
+
+  <Accordion title="Depth-First Search (DFS)">
+
+DFS explores as far as possible along each branch before backtracking. It returns the traversal route and whether the target was reached.
+
+**Signatures**
+
+```go
+func DepthFirstSearch(start, end int, nodes []int, edges [][]bool) ([]int, bool)
+
+func DepthFirstSearchHelper(start, end int, nodes []int, edges [][]bool, showroute bool) ([]int, bool)
+```
+
+- `start` — value of the starting vertex (looked up in `nodes`)
+- `end` — value of the target vertex
+- `nodes` — slice of vertex values
+- `edges` — boolean adjacency matrix; `edges[i][j] == true` means an edge exists
+- `showroute` — if `true`, returns the partial route even when `end` is not reached
+
+**Complexity**
+
+| | |
+|--|--|
+| Time | O(V + E) |
+| Space | O(V) |
+
+**Example**
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/TheAlgorithms/Go/graph"
+)
+
+func main() {
+    nodes := []int{1, 2, 3, 4}
+    edges := [][]bool{
+        {false, true, true, false},
+        {true, false, false, true},
+        {true, false, false, true},
+        {false, true, true, false},
+    }
+    route, found := graph.DepthFirstSearch(1, 4, nodes, edges)
+    fmt.Println(found, route) // true [1 3 4]
+}
+```
+
+<Note>
+`DepthFirstSearch` mutates the `edges` matrix by clearing traversed edges. Pass a copy if you need to reuse the matrix.
+</Note>
+
+  </Accordion>
+
+  <Accordion title="Topological Sort — DFS-based">
+
+`Topological` produces a linear ordering of vertices in a directed acyclic graph (DAG) where every edge `u → v` appears with `u` before `v`. Implemented using DFS internally.
+
+**Signature**
+
+```go
+func Topological(N int, constraints [][]int) []int
+```
+
+- `N` — number of vertices (labelled `0` to `N-1`)
+- `constraints` — list of directed edges; each `[]int{a, b}` represents the edge `a → b`
+
+**Complexity**
+
+| | |
+|--|--|
+| Time | O(V + E) |
+| Space | O(V) |
+
+**Example**
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/TheAlgorithms/Go/graph"
+)
+
+func main() {
+    // Tasks: 0 must come before 1 and 2; 1 must come before 3
+    constraints := [][]int{{0, 1}, {0, 2}, {1, 3}}
+    order := graph.Topological(4, constraints)
+    fmt.Println(order) // e.g. [0 2 1 3]
+}
+```
+
+<Warning>
+`Topological` assumes the graph is a valid DAG. It does not detect cycles — passing a cyclic graph produces undefined output. Use `Kahn` if you need cycle detection.
+</Warning>
+
+  </Accordion>
+
+  <Accordion title="Topological Sort — Kahn's Algorithm">
+
+Kahn's algorithm produces a topological ordering using in-degree tracking and a BFS queue. Unlike the DFS variant, it explicitly returns `nil` when the graph contains a cycle.
+
+**Signature**
+
+```go
+func Kahn(n int, dependencies [][]int) []int
+```
+
+- `n` — number of vertices (labelled `0` to `n-1`)
+- `dependencies` — list of directed edges; each `[]int{a, b}` represents `a → b` (b depends on a)
+- Returns `nil` if the graph is not a DAG
+
+**Complexity**
+
+| | |
+|--|--|
+| Time | O(V + E) |
+| Space | O(V + E) |
+
+**Example**
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/TheAlgorithms/Go/graph"
+)
+
+func main() {
+    // Build order: package 0 and 1 must be built before 2; 2 before 3
+    deps := [][]int{{0, 2}, {1, 2}, {2, 3}}
+    order := graph.Kahn(4, deps)
+    fmt.Println(order) // e.g. [0 1 2 3]
+
+    // Cyclic graph — Kahn returns nil
+    cyclic := [][]int{{0, 1}, {1, 0}}
+    fmt.Println(graph.Kahn(2, cyclic)) // <nil>
+}
+```
+
+  </Accordion>
+
+  <Accordion title="Articulation Points">
+
+An articulation point (cut vertex) is a vertex whose removal increases the number of connected components. `ArticulationPoint` finds all such vertices using a single DFS pass with Tarjan's discovery-time technique.
+
+**Signature**
+
+```go
+func ArticulationPoint(graph *Graph) []bool
+```
+
+- `graph` — pointer to a `Graph` (undirected)
+- Returns a boolean slice of length `graph.vertices`; index `i` is `true` if vertex `i` is an articulation point
+
+**Complexity**
+
+| | |
+|--|--|
+| Time | O(V + E) |
+| Space | O(V) |
+
+**Example**
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/TheAlgorithms/Go/graph"
+)
+
+func main() {
+    // Graph: 0-1-2-3, with 1 being a bridge vertex
+    g := graph.New(4)
+    g.AddEdge(0, 1)
+    g.AddEdge(1, 2)
+    g.AddEdge(2, 3)
+
+    isAP := graph.ArticulationPoint(g)
+    for v, ap := range isAP {
+        if ap {
+            fmt.Printf("vertex %d is an articulation point\n", v)
+        }
+    }
+    // vertex 1 is an articulation point
+    // vertex 2 is an articulation point
+}
+```
+
+  </Accordion>
+
+  <Accordion title="Cycle Detection">
+
+Two methods are available for cycle detection in directed graphs:
+
+- `HasCycle` — fast check; returns `true` as soon as a cycle is found (3-color DFS).
+- `FindAllCycles` — slower; returns every distinct cycle as a separate `Graph`.
+
+**Signatures**
+
+```go
+func (g *Graph) HasCycle() bool
+func (g *Graph) FindAllCycles() []Graph
+```
+
+**Complexity**
+
+| Method | Time | Space |
+|--------|------|-------|
+| `HasCycle` | O(V + E) | O(V) |
+| `FindAllCycles` | O(V + E) | O(V) |
+
+**Example**
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/TheAlgorithms/Go/graph"
+)
+
+func main() {
+    g := graph.New(3)
+    g.Directed = true
+    g.AddEdge(0, 1)
+    g.AddEdge(1, 2)
+    g.AddEdge(2, 0) // creates a cycle
+
+    fmt.Println(g.HasCycle()) // true
+
+    cycles := g.FindAllCycles()
+    fmt.Println(len(cycles), "cycle(s) found")
+}
+```
+
+<Note>
+Both methods operate on directed graphs. For undirected cycle detection, use Union-Find (see the spanning tree page).
+</Note>
+
+  </Accordion>
+
+  <Accordion title="Kosaraju's Strongly Connected Components">
+
+Kosaraju's algorithm finds all strongly connected components (SCCs) in a directed graph. A SCC is a maximal set of vertices where every vertex is reachable from every other vertex in the set.
+
+The algorithm runs two DFS passes:
+1. Fill a stack by finish time on the original graph.
+2. DFS on the transposed (edge-reversed) graph in stack order.
+
+**Signature**
+
+```go
+func (g *Graph) Kosaraju() [][]int
+```
+
+- Returns a slice of SCCs; each SCC is a `[]int` of vertex indices.
+
+**Complexity**
+
+| | |
+|--|--|
+| Time | O(V + E) |
+| Space | O(V) |
+
+**Example**
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/TheAlgorithms/Go/graph"
+)
+
+func main() {
+    g := graph.New(5)
+    g.Directed = true
+    g.AddEdge(0, 1)
+    g.AddEdge(1, 2)
+    g.AddEdge(2, 0) // SCC: {0,1,2}
+    g.AddEdge(3, 2)
+    g.AddEdge(4, 3) // SCCs: {3}, {4}
+
+    sccs := g.Kosaraju()
+    for i, scc := range sccs {
+        fmt.Printf("SCC %d: %v\n", i, scc)
+    }
+}
+```
+
+  </Accordion>
+
+  <Accordion title="Lowest Common Ancestor (LCA)">
+
+Given a rooted tree, the LCA of two nodes `u` and `v` is the deepest node that is an ancestor of both. This implementation uses binary lifting, precomputing jump tables in O(n log n) to answer each LCA query in O(log n).
+
+**Signatures**
+
+```go
+func NewTree(numbersVertex, root int, edges []TreeEdge) *Tree
+
+func LowestCommonAncestor(tree *Tree)
+
+func (tree *Tree) GetLCA(u, v int) int
+func (tree *Tree) GetDepth(u int) int
+func (tree *Tree) GetDad(u int) int
+```
+
+- `NewTree` constructs the tree from a list of `TreeEdge{from, to}` pairs.
+- `LowestCommonAncestor` preprocesses the jump table; call this once after construction.
+- `GetLCA(u, v)` returns the LCA vertex index.
+
+**Complexity**
+
+| Phase | Time | Space |
+|-------|------|-------|
+| Preprocessing (`LowestCommonAncestor`) | O(n log n) | O(n log n) |
+| Query (`GetLCA`) | O(log n) | O(1) |
+
+**Example**
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/TheAlgorithms/Go/graph"
+)
+
+func main() {
+    // Tree with 7 nodes rooted at 0
+    //       0
+    //      / \
+    //     1   2
+    //    / \   \
+    //   3   4   5
+    //            \
+    //             6
+    edges := []graph.TreeEdge{
+        {0, 1}, {0, 2},
+        {1, 3}, {1, 4},
+        {2, 5}, {5, 6},
+    }
+    tree := graph.NewTree(7, 0, edges)
+    graph.LowestCommonAncestor(tree)
+
+    fmt.Println(tree.GetLCA(3, 4)) // 1
+    fmt.Println(tree.GetLCA(3, 6)) // 0
+    fmt.Println(tree.GetLCA(5, 6)) // 5
+}
+```
+
+  </Accordion>
+
+</AccordionGroup>

@@ -1,0 +1,102 @@
+---
+title: Introduction
+description: An overview of TheAlgorithms/Go — a community-driven collection of algorithms and data structures implemented in idiomatic Go for educational purposes.
+---
+
+**TheAlgorithms/Go** is an open-source repository of classic algorithms and data structures written in Go. Every implementation is designed to be readable, well-documented, and covered by tests. The goal is education: each file explains the algorithm it implements, not just the mechanics of the code.
+
+The module path is `github.com/TheAlgorithms/Go`. The repository requires no external dependencies — every package uses only the Go standard library (plus the internal `constraints` package for generics).
+
+<Note>
+  These implementations are for learning and reference. For production use, prefer the algorithms in Go's standard library (e.g., `sort.Slice`, `container/heap`).
+</Note>
+
+## Who it's for
+
+- Students learning algorithms and data structures
+- Developers preparing for technical interviews
+- Go programmers exploring idiomatic patterns such as generics and interfaces
+- Contributors who want to practice implementing algorithms in a real codebase
+
+## Repository layout
+
+The repository is organized by category. Each directory is a separate Go package.
+
+```
+github.com/TheAlgorithms/Go/
+├── sort/          # Sorting algorithms (25+ implementations)
+├── search/        # Searching algorithms
+├── graph/         # Graph traversal and shortest-path algorithms
+├── dynamic/       # Dynamic programming problems
+├── structure/     # Data structures
+├── math/          # Mathematical algorithms and number theory
+├── cipher/        # Classical encryption ciphers
+├── strings/       # String algorithms and pattern matching
+├── compression/   # Data compression (Huffman coding)
+├── hashing/       # Hashing algorithms (SHA-256)
+├── conversion/    # Data format conversions
+├── cache/         # Cache replacement policies (LRU, LFU)
+├── checksum/      # Checksum algorithms (CRC8, Luhn)
+├── constraints/   # Generic type constraints
+└── other/         # Miscellaneous algorithms
+```
+
+## What's covered
+
+<CardGroup cols={2}>
+  <Card title="Sorting" icon="arrow-up-wide-short" href="/algorithms/sorting/overview">
+    Bubble, Merge, Quick, Heap, Radix, Timsort, Shell, Counting, Bucket, Patience, and 15+ more.
+  </Card>
+  <Card title="Searching" icon="magnifying-glass" href="/algorithms/searching/overview">
+    Binary search, interpolation search, jump search, ternary search, and linear search.
+  </Card>
+  <Card title="Graph algorithms" icon="diagram-project" href="/algorithms/graph/overview">
+    BFS, DFS, Dijkstra, Floyd-Warshall, Bellman-Ford, Kruskal's MST, Prim's MST, topological sort, articulation points, and Edmond-Karp max flow.
+  </Card>
+  <Card title="Dynamic programming" icon="layer-group" href="/algorithms/dynamic/overview">
+    Knapsack, LCS, LIS, edit distance, coin change, matrix chain multiplication, egg dropping, rod cutting, and more.
+  </Card>
+  <Card title="Data structures" icon="database" href="/reference/structures/overview">
+    Linked lists (singly, doubly, cyclic), stacks, queues, deques, heaps, hash maps, segment trees, tries, dynamic arrays, and sets.
+  </Card>
+  <Card title="Math & number theory" icon="square-root-variable" href="/reference/math/overview">
+    GCD, LCM, prime sieve, Miller-Rabin primality, modular exponentiation, factorial, Fibonacci, Pascal's triangle, Euler's totient, and geometric algorithms.
+  </Card>
+  <Card title="Strings & text" icon="font" href="/reference/strings/overview">
+    Aho-Corasick, KMP, Horspool, Boyer-Moore, Levenshtein distance, palindrome detection, Manacher's algorithm, and string combination generators.
+  </Card>
+  <Card title="Ciphers" icon="lock" href="/reference/strings/ciphers">
+    Caesar cipher, ROT13, RSA, Polybius square, Diffie-Hellman key exchange, XOR cipher, transposition cipher, and Rail Fence cipher.
+  </Card>
+</CardGroup>
+
+## Design principles
+
+**Generics.** Many algorithms use Go generics via the internal `constraints` package. For example, `sort.Bubble` accepts any `constraints.Ordered` type — integers, floats, or strings — without code duplication.
+
+```go
+// Bubble is a simple generic definition of Bubble sort algorithm.
+func Bubble[T constraints.Ordered](arr []T) []T {
+    swapped := true
+    for swapped {
+        swapped = false
+        for i := 0; i < len(arr)-1; i++ {
+            if arr[i+1] < arr[i] {
+                arr[i+1], arr[i] = arr[i], arr[i+1]
+                swapped = true
+            }
+        }
+    }
+    return arr
+}
+```
+
+**GoDoc comments.** Every exported function and type has a documentation comment that starts with the symbol name, following the Go documentation standard. This generates correct documentation on pkg.go.dev and the repository website.
+
+**Tests and benchmarks.** Each algorithm has a corresponding `_test.go` file. Most packages include both unit tests and benchmark functions so you can compare implementations under realistic conditions.
+
+**No external dependencies.** The `go.mod` declares only `go 1.19` with no `require` directives. Every implementation uses the Go standard library only.
+
+## License
+
+The repository is licensed under the [MIT License](https://github.com/TheAlgorithms/Go/blob/master/LICENSE). Your contributions are distributed under the same license once merged.

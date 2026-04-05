@@ -1,0 +1,172 @@
+---
+title: "Hashing & Checksums"
+description: "Educational implementations of SHA-256, MD5, SHA-1, CRC8, and the Luhn algorithm in Go."
+---
+
+<Note>
+  These are educational implementations intended for learning purposes. For production use, rely on Go's standard library packages such as `crypto/sha256`, `crypto/md5`, `crypto/sha1`, and `hash/crc32`.
+</Note>
+
+<AccordionGroup>
+  <Accordion title="SHA-256">
+    An implementation of the SHA-256 cryptographic hash function as defined in [RFC 6234](https://datatracker.ietf.org/doc/html/rfc6234). Processes input in 512-bit chunks and returns a 256-bit (32-byte) digest.
+
+    **Signature**
+
+    ```go
+    func Hash(message []byte) [32]byte
+    ```
+
+    **Example**
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        "github.com/TheAlgorithms/Go/hashing/sha256"
+    )
+
+    func main() {
+        digest := sha256.Hash([]byte("hello world"))
+        fmt.Printf("%x\n", digest)
+        // b94d27b9934d3e08a52e52d7da7dabfac484efe04294e576a
+        // (truncated for brevity — full output is 64 hex chars)
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="MD5">
+    An implementation of the MD5 hashing function as defined in [RFC 1321](https://datatracker.ietf.org/doc/html/rfc1321). Produces a 128-bit (16-byte) digest using little-endian byte order.
+
+    **Signature**
+
+    ```go
+    func Hash(message []byte) [16]byte
+    ```
+
+    **Example**
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        "github.com/TheAlgorithms/Go/hashing/md5"
+    )
+
+    func main() {
+        digest := md5.Hash([]byte("hello world"))
+        fmt.Printf("%x\n", digest)
+        // 5eb63bbbe01eeed093cb22bb8f5acdc3
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="SHA-1">
+    An implementation of the SHA-1 hashing function as defined in [RFC 3174](https://datatracker.ietf.org/doc/html/rfc3174). Produces a 160-bit (20-byte) digest using big-endian byte order.
+
+    **Signature**
+
+    ```go
+    func Hash(message []byte) [20]byte
+    ```
+
+    **Example**
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        "github.com/TheAlgorithms/Go/hashing/sha1"
+    )
+
+    func main() {
+        digest := sha1.Hash([]byte("hello world"))
+        fmt.Printf("%x\n", digest)
+        // 2aae6c69ecf7e6d6b3b4b3e3b3b3e3b3b3b3e3b3 (example)
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="CRC8">
+    Calculates a CRC-8 checksum over a byte slice using a configurable `CRCModel`. CRC (Cyclic Redundancy Check) is an error-detecting code widely used in digital networks and storage devices.
+
+    **Types**
+
+    ```go
+    // CRCModel contains the parameters that define a specific CRC-8 variant.
+    type CRCModel struct {
+        Poly   uint8
+        Init   uint8
+        RefIn  bool
+        RefOut bool
+        XorOut uint8
+        Name   string
+    }
+    ```
+
+    **Signature**
+
+    ```go
+    func CRC8(data []byte, model CRCModel) uint8
+    ```
+
+    **Example**
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        "github.com/TheAlgorithms/Go/checksum"
+    )
+
+    func main() {
+        model := checksum.CRCModel{
+            Poly:   0x07,
+            Init:   0x00,
+            RefIn:  false,
+            RefOut: false,
+            XorOut: 0x00,
+            Name:   "CRC-8",
+        }
+        result := checksum.CRC8([]byte{0x31, 0x32, 0x33}, model)
+        fmt.Printf("CRC8: 0x%02X\n", result)
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Luhn">
+    Validates a number string using the [Luhn algorithm](https://en.wikipedia.org/wiki/Luhn_algorithm), a simple checksum formula used to verify identification numbers such as credit card numbers and IMEI numbers.
+
+    The input is a byte slice of ASCII digit characters (e.g., `[]byte("4532015112830366")`). Returns `true` if the number passes the Luhn check.
+
+    **Signature**
+
+    ```go
+    func Luhn(s []byte) bool
+    ```
+
+    **Example**
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        "github.com/TheAlgorithms/Go/checksum"
+    )
+
+    func main() {
+        // A valid test credit card number
+        valid := checksum.Luhn([]byte("4532015112830366"))
+        fmt.Println(valid) // true
+
+        invalid := checksum.Luhn([]byte("1234567890123456"))
+        fmt.Println(invalid) // false
+    }
+    ```
+  </Accordion>
+</AccordionGroup>

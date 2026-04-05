@@ -1,0 +1,385 @@
+---
+title: "Number Theory Reference"
+description: "Full function signatures and Go examples for primes, GCD/LCM, modular arithmetic, factorial, Fibonacci, binary math, and statistics in TheAlgorithms/Go."
+---
+
+<AccordionGroup>
+
+<Accordion title="Primes">
+
+Import path: `github.com/TheAlgorithms/Go/math/prime`
+
+### TrialDivision
+
+```go
+func TrialDivision(n int64) bool
+```
+
+Tests primality by trial division against every integer from 2 to n−1.
+Time complexity: O(n). Suitable only for small inputs.
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/TheAlgorithms/Go/math/prime"
+)
+
+func main() {
+    fmt.Println(prime.TrialDivision(13))  // true
+    fmt.Println(prime.TrialDivision(15))  // false
+}
+```
+
+### OptimizedTrialDivision
+
+```go
+func OptimizedTrialDivision(n int64) bool
+```
+
+Checks only odd divisors up to √n, skipping all even numbers after 2.
+Time complexity: O(√n).
+
+```go
+fmt.Println(prime.OptimizedTrialDivision(97))   // true
+fmt.Println(prime.OptimizedTrialDivision(100))  // false
+```
+
+### MillerRabinDeterministic
+
+```go
+func MillerRabinDeterministic(num int64) (bool, error)
+```
+
+Deterministic Miller-Rabin test. Selects the minimal witness set required
+to give a correct answer for every valid `int64` value. Time complexity:
+O(k · log(n)³) where k is the number of witnesses used.
+
+```go
+isPrime, err := prime.MillerRabinDeterministic(7919)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println(isPrime) // true
+```
+
+<Note>
+`MillerRabinDeterministic` is safe for all `int64` inputs without false
+positives. Use `MillerRabinProbabilistic` when you want to control the
+number of random witness rounds instead.
+</Note>
+
+### Sieve (channel-based)
+
+```go
+func Generate(limit int) []int
+func GenerateChannel(ch chan<- int)
+func Sieve(in <-chan int, out chan<- int, prime int)
+```
+
+`Generate` returns the first `limit` prime numbers using a concurrent
+channel sieve (Sieve of Eratosthenes).
+
+```go
+primes := prime.Generate(10)
+fmt.Println(primes) // [2 3 5 7 11 13 17 19 23 29]
+```
+
+</Accordion>
+
+<Accordion title="GCD / LCM">
+
+Import paths:
+- `github.com/TheAlgorithms/Go/math/gcd`
+- `github.com/TheAlgorithms/Go/math/lcm`
+
+All GCD variants run in O(log(min(a, b))) time.
+
+### gcd.Recursive
+
+```go
+func Recursive(a, b int64) int64
+```
+
+Classic Euclidean algorithm implemented recursively.
+
+```go
+import "github.com/TheAlgorithms/Go/math/gcd"
+
+fmt.Println(gcd.Recursive(48, 18)) // 6
+```
+
+### gcd.Iterative
+
+```go
+func Iterative(a, b int64) int64
+```
+
+Iterative Euclidean algorithm — same asymptotic complexity as `Recursive`
+but avoids stack growth for large inputs.
+
+```go
+fmt.Println(gcd.Iterative(48, 18)) // 6
+```
+
+### gcd.ExtendedRecursive
+
+```go
+func ExtendedRecursive(a, b int64) (int64, int64, int64)
+```
+
+Returns `(d, x, y)` satisfying `a·x + b·y = d = gcd(a, b)` (Bézout's
+identity). Useful for computing modular inverses.
+
+```go
+d, x, y := gcd.ExtendedRecursive(35, 15)
+fmt.Printf("gcd=%d, x=%d, y=%d\n", d, x, y)
+// gcd=5, x=1, y=-2
+```
+
+### lcm.Lcm
+
+```go
+func Lcm(a, b int64) int64
+```
+
+Returns `lcm(a, b)` using the relation `lcm(a,b) · gcd(a,b) = |a·b|`.
+
+```go
+import "github.com/TheAlgorithms/Go/math/lcm"
+
+fmt.Println(lcm.Lcm(4, 6)) // 12
+```
+
+</Accordion>
+
+<Accordion title="Modular Arithmetic">
+
+Import path: `github.com/TheAlgorithms/Go/math/modular`
+
+### modular.Exponentiation
+
+```go
+func Exponentiation(base, exponent, mod int64) (int64, error)
+```
+
+Computes `base^exponent % mod` using fast binary exponentiation.
+Time complexity: O(log(exponent)).
+
+Returns `ErrorNegativeExponent` if `exponent < 0` and `ErrorIntOverflow`
+if intermediate values would overflow `int64`.
+
+```go
+import "github.com/TheAlgorithms/Go/math/modular"
+
+result, err := modular.Exponentiation(2, 10, 1000)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println(result) // 24  (1024 % 1000)
+```
+
+### modular.Inverse
+
+```go
+func Inverse(a, m int64) (int64, error)
+```
+
+Returns the modular multiplicative inverse of `a` modulo `m` — that is,
+the value `x` such that `a·x ≡ 1 (mod m)`. Returns `ErrorInverse` when
+no inverse exists (i.e. gcd(a, m) ≠ 1).
+
+```go
+x, err := modular.Inverse(3, 7)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println(x) // 5  (3·5 = 15 ≡ 1 mod 7)
+```
+
+<Tip>
+The modular inverse only exists when `a` and `m` are coprime. Check with
+`gcd.Iterative(a, m) == 1` before calling if you are unsure.
+</Tip>
+
+</Accordion>
+
+<Accordion title="Factorial & Fibonacci">
+
+### Factorial
+
+Import path: `github.com/TheAlgorithms/Go/math/factorial`
+
+All three variants return `(int, error)` and reject negative inputs with
+`ErrNegativeArgument`.
+
+```go
+func Iterative(n int) (int, error)
+func Recursive(n int) (int, error)
+func UsingTree(n int) (int, error)
+```
+
+| Function | Strategy | Notes |
+|---|---|---|
+| `Iterative` | Simple loop | O(n) time, O(1) space |
+| `Recursive` | Recursive calls | O(n) time, O(n) stack |
+| `UsingTree` | Binary tree product | Reduces multiplication depth |
+
+```go
+import "github.com/TheAlgorithms/Go/math/factorial"
+
+v, _ := factorial.Iterative(10)
+fmt.Println(v) // 3628800
+
+v, _ = factorial.UsingTree(10)
+fmt.Println(v) // 3628800
+```
+
+### Fibonacci
+
+Import path: `github.com/TheAlgorithms/Go/math/fibonacci`
+
+```go
+func Matrix(n uint) uint
+func Formula(n uint) uint
+func Recursive(n uint) uint
+```
+
+| Function | Strategy | Complexity |
+|---|---|---|
+| `Matrix` | Matrix exponentiation | O(log n) |
+| `Formula` | Binet's closed-form formula | O(1) — loses precision for large n |
+| `Recursive` | Naïve recursion | O(2ⁿ) — for small n only |
+
+```go
+import "github.com/TheAlgorithms/Go/math/fibonacci"
+
+fmt.Println(fibonacci.Matrix(10))    // 55
+fmt.Println(fibonacci.Formula(10))   // 55
+fmt.Println(fibonacci.Recursive(10)) // 55
+```
+
+<Note>
+`Formula` uses floating-point arithmetic (Binet's formula with φ = (√5+1)/2)
+and accumulates rounding errors for large values of `n`. Prefer `Matrix`
+for correctness on large inputs.
+</Note>
+
+</Accordion>
+
+<Accordion title="Binary Math">
+
+Import path: `github.com/TheAlgorithms/Go/math/binary`
+
+### binary.IsPowerOfTwo
+
+```go
+func IsPowerOfTwo(x int) bool
+```
+
+Returns `true` when `x` is a positive power of two using the bit trick
+`x & (x-1) == 0`. O(1) time and space.
+
+```go
+import "github.com/TheAlgorithms/Go/math/binary"
+
+fmt.Println(binary.IsPowerOfTwo(8))  // true
+fmt.Println(binary.IsPowerOfTwo(6))  // false
+fmt.Println(binary.IsPowerOfTwo(0))  // false
+```
+
+### binary.IsPowerOfTwoLeftShift
+
+```go
+func IsPowerOfTwoLeftShift(number uint) bool
+```
+
+Alternative check using repeated left-shifts (multiply-by-2). O(log n) time.
+
+### binary.BitCounter
+
+```go
+func BitCounter(n uint) int
+```
+
+Returns the number of set bits (1-bits) in `n`. Also known as the
+Hamming weight or popcount. Time complexity: O(log n).
+
+```go
+fmt.Println(binary.BitCounter(255)) // 8  (0b11111111)
+fmt.Println(binary.BitCounter(9))   // 2  (0b1001)
+```
+
+### binary.Abs
+
+```go
+func Abs(base, n int) int
+```
+
+Returns the absolute value of `n` using only bitwise operations.
+`base` is the bit-width of the integer type (e.g., 32 or 64).
+
+```go
+fmt.Println(binary.Abs(64, -42)) // 42
+fmt.Println(binary.Abs(64, 17))  // 17
+```
+
+</Accordion>
+
+<Accordion title="Statistics">
+
+Import path: `github.com/TheAlgorithms/Go/math`
+
+All three functions are generic over `constraints.Number`.
+
+### Mean
+
+```go
+func Mean[T constraints.Number](values []T) float64
+```
+
+Returns the arithmetic mean of the slice. Returns `0` for an empty slice.
+
+```go
+import gomath "github.com/TheAlgorithms/Go/math"
+
+fmt.Println(gomath.Mean([]int{1, 2, 3, 4, 5}))     // 3
+fmt.Println(gomath.Mean([]float64{1.5, 2.5, 3.0})) // 2.333...
+```
+
+### Median
+
+```go
+func Median[T constraints.Number](values []T) float64
+```
+
+Sorts the slice (using bubble sort) and returns the middle value.
+For even-length slices returns the average of the two middle elements.
+Time complexity: O(n log n).
+
+```go
+fmt.Println(gomath.Median([]int{3, 1, 4, 1, 5})) // 3
+fmt.Println(gomath.Median([]int{1, 2, 3, 4}))    // 2  (integer division of (2+3)/2)
+```
+
+### Mode
+
+```go
+func Mode[T constraints.Number](numbers []T) (T, error)
+```
+
+Returns the most frequently occurring value. Returns `ErrEmptySlice` for
+an empty input. Time complexity: O(n), space: O(n).
+
+```go
+m, err := gomath.Mode([]int{1, 2, 2, 3, 3, 3})
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println(m) // 3
+```
+
+</Accordion>
+
+</AccordionGroup>

@@ -1,0 +1,223 @@
+---
+title: "Ciphers & Cryptography"
+description: "Detailed reference for every classical and modern cipher implementation in TheAlgorithms/Go."
+---
+
+<Note>
+  All cipher implementations in this package are educational. They are designed to illustrate algorithm concepts and are **not suitable for production use**. They lack padding, authenticated encryption, side-channel protection, and other properties required by secure systems. Use the Go standard library (`crypto/*`) or a well-audited third-party library for any real security need.
+</Note>
+
+<AccordionGroup>
+
+  <Accordion title="Caesar cipher">
+    Package `caesar` implements the classical Caesar (shift) substitution cipher. Each letter in the plaintext is shifted a fixed number of positions in the alphabet; non-letter characters are passed through unchanged.
+
+    **`Encrypt(input string, key int) string`** — shifts every letter in `input` right by `key` positions (mod 26). Negative keys are normalised automatically.
+
+    **`Decrypt(input string, key int) string`** — reverses encryption by shifting left by `key` positions, implemented as `Encrypt(input, 26-key)`.
+
+    **Time/space complexity:** O(n) for both.
+
+    ```go
+    import "github.com/TheAlgorithms/Go/cipher/caesar"
+
+    ciphertext := caesar.Encrypt("Hello, World!", 3)
+    // ciphertext: "Khoor, Zruog!"
+
+    plaintext := caesar.Decrypt(ciphertext, 3)
+    // plaintext: "Hello, World!"
+    ```
+  </Accordion>
+
+  <Accordion title="ROT13">
+    Package `rot13` is a special case of the Caesar cipher with a fixed shift of 13. Because the English alphabet has 26 letters, applying ROT13 twice returns the original string — `rot13` is its own inverse.
+
+    The package exposes an unexported `rot13(input string) string` function that delegates directly to `caesar.Encrypt(input, 13)`. It is primarily useful as a demonstration that ROT13 is a Caesar cipher with key 13.
+
+    ```go
+    import "github.com/TheAlgorithms/Go/cipher/caesar"
+
+    // ROT13 = Caesar with key 13
+    encoded := caesar.Encrypt("Hello, World!", 13)
+    // encoded: "Uryyb, Jbeyq!"
+
+    // Applying again decodes it
+    decoded := caesar.Encrypt(encoded, 13)
+    // decoded: "Hello, World!"
+    ```
+  </Accordion>
+
+  <Accordion title="XOR cipher">
+    Package `xor` implements single-byte XOR encryption. Every byte of the plaintext is XORed with the same key byte to produce the ciphertext. Because XOR is its own inverse, `Decrypt` is identical in structure to `Encrypt`.
+
+    **`Encrypt(key byte, plaintext []byte) []byte`** — returns a new byte slice where each byte is `plaintext[i] ^ key`.
+
+    **`Decrypt(key byte, cipherText []byte) []byte`** — returns the original plaintext by XORing each byte of `cipherText` with `key`.
+
+    **Time/space complexity:** O(n) for both.
+
+    ```go
+    import "github.com/TheAlgorithms/Go/cipher/xor"
+
+    key := byte(0x42)
+    plaintext := []byte("Hello, World!")
+
+    ciphertext := xor.Encrypt(key, plaintext)
+    recovered  := xor.Decrypt(key, ciphertext)
+    // string(recovered) == "Hello, World!"
+    ```
+
+    <Warning>
+      Single-byte XOR is trivially broken by frequency analysis. Never use it for sensitive data.
+    </Warning>
+  </Accordion>
+
+  <Accordion title="RSA">
+    Package `rsa` demonstrates textbook RSA encryption and decryption via modular exponentiation. The implementation works on `[]rune` slices and uses `int64` arithmetic, which limits key sizes to values that fit in 64-bit integers. No OAEP or other padding is applied.
+
+    **`Encrypt(message []rune, publicExponent, modulus int64) ([]rune, error)`** — encrypts each rune as `rune^publicExponent mod modulus`. Returns `ErrorFailedToEncrypt` if modular exponentiation fails for any rune.
+
+    **`Decrypt(encrypted []rune, privateExponent, modulus int64) (string, error)`** — decrypts each rune as `rune^privateExponent mod modulus`. Returns `ErrorFailedToDecrypt` on failure.
+
+    ```go
+    import "github.com/TheAlgorithms/Go/cipher/rsa"
+
+    // Example with small educational primes p=61, q=53
+    // n = p*q = 3233, e = 17, d = 2753
+    message := []rune("Hi")
+
+    encrypted, err := rsa.Encrypt(message, 17, 3233)
+    if err != nil {
+        // handle rsa.ErrorFailedToEncrypt
+    }
+
+    plaintext, err := rsa.Decrypt(encrypted, 2753, 3233)
+    // plaintext: "Hi"
+    ```
+  </Accordion>
+
+  <Accordion title="Diffie-Hellman key exchange">
+    Package `diffiehellman` implements the Diffie-Hellman key exchange protocol over a fixed prime field. It uses Euler's prime `6700417` as the modulus and generator `3`.
+
+    **`GenerateShareKey(prvKey int64) int64`** — computes the public share key as `generator^prvKey mod primeNumber`. Share this value with the other party.
+
+    **`GenerateMutualKey(prvKey, shareKey int64) int64`** — computes the shared secret as `shareKey^prvKey mod primeNumber`. Both parties arrive at the same value without ever transmitting their private keys.
+
+    ```go
+    import "github.com/TheAlgorithms/Go/cipher/diffiehellman"
+
+    // Alice and Bob each choose a private key
+    alicePrivate := int64(6)
+    bobPrivate   := int64(15)
+
+    // Exchange public share keys
+    aliceShare := diffiehellman.GenerateShareKey(alicePrivate)
+    bobShare   := diffiehellman.GenerateShareKey(bobPrivate)
+
+    // Each computes the same mutual (shared) secret
+    aliceMutual := diffiehellman.GenerateMutualKey(alicePrivate, bobShare)
+    bobMutual   := diffiehellman.GenerateMutualKey(bobPrivate, aliceShare)
+    // aliceMutual == bobMutual
+    ```
+  </Accordion>
+
+  <Accordion title="Polybius square">
+    Package `polybius` implements the Polybius square substitution cipher. Each letter is encoded as a pair of characters drawn from a configurable alphabet, arranged in a square grid of configurable size.
+
+    **`NewPolybius(key string, size int, chars string) (*Polybius, error)`** — constructs a Polybius instance. `key` is the plaintext alphabet (length must equal `size²`), `size` is the grid dimension, and `chars` is the set of row/column labels (length must equal `size`, Latin letters only, no duplicates). Returns an error if any constraint is violated.
+
+    **`(*Polybius).Encrypt(text string) (string, error)`** — converts each letter in `text` to its two-character Polybius coordinate pair.
+
+    **`(*Polybius).Decrypt(text string) (string, error)`** — converts each coordinate pair back to the original letter.
+
+    ```go
+    import "github.com/TheAlgorithms/Go/cipher/polybius"
+
+    // 5×5 grid, row/col labels "ADFGX", key is the 25-letter square
+    key := "ABCDEFGHIKLMNOPQRSTUVWXYZ" // 25 letters (I/J combined)
+    pb, err := polybius.NewPolybius(key, 5, "ADFGX")
+    if err != nil {
+        // handle configuration error
+    }
+
+    ciphertext, _ := pb.Encrypt("HELLO")
+    plaintext,  _ := pb.Decrypt(ciphertext)
+    ```
+  </Accordion>
+
+  <Accordion title="Transposition cipher">
+    Package `transposition` implements a columnar transposition cipher. Plaintext is written in rows across columns determined by a keyword; the columns are then read out in the alphabetical order of the keyword letters.
+
+    **`Encrypt(text []rune, keyWord string) ([]rune, error)`** — pads `text` with spaces as needed, permutes each block of `len(keyWord)` characters according to the key order, and returns the ciphertext. Returns `ErrKeyMissing` if `keyWord` is empty, or `ErrNoTextToEncrypt` if `text` is empty or ends with the placeholder space.
+
+    **`Decrypt(text []rune, keyWord string) ([]rune, error)`** — applies the inverse permutation to recover the original plaintext, stripping trailing pad spaces.
+
+    ```go
+    import "github.com/TheAlgorithms/Go/cipher/transposition"
+
+    plaintext := []rune("WEAREDISCOVERED")
+    keyword   := "ZEBRAS"
+
+    ciphertext, err := transposition.Encrypt(plaintext, keyword)
+    if err != nil {
+        // handle transposition.ErrKeyMissing or ErrNoTextToEncrypt
+    }
+
+    recovered, err := transposition.Decrypt(ciphertext, keyword)
+    // string(recovered) == "WEAREDISCOVERED"
+    ```
+  </Accordion>
+
+  <Accordion title="Rail fence cipher">
+    Package `railfence` implements the rail fence (zigzag) transposition cipher. Characters are written diagonally across a number of rows ("rails") in a zigzag pattern, then read off row by row to form the ciphertext.
+
+    **`Encrypt(text string, rails int) string`** — distributes characters of `text` across `rails` rows following the zigzag pattern, then concatenates each row to form the ciphertext. Returns `text` unchanged when `rails == 1`.
+
+    **`Decrypt(cipherText string, rails int) string`** — reconstructs the zigzag pattern to determine each character's original position and returns the plaintext. Returns `cipherText` unchanged when `rails == 1` or `rails >= len(cipherText)`.
+
+    ```go
+    import "github.com/TheAlgorithms/Go/cipher/railfence"
+
+    ciphertext := railfence.Encrypt("WEAREDISCOVEREDFLEEATONCE", 3)
+    // ciphertext: "WECRLTEERDSOEEFEAABORADICVNE" (3-rail pattern)
+
+    plaintext := railfence.Decrypt(ciphertext, 3)
+    // plaintext: "WEAREDISCOVEREDFLEEATONCE"
+    ```
+  </Accordion>
+
+  <Accordion title="DSA — Digital Signature Algorithm">
+    Package `dsa` implements the Digital Signature Algorithm (DSA) per FIPS 186-4. It generates 1024-bit parameters (L=1024, N=160) using Miller-Rabin primality testing with 64 rounds. All arithmetic uses `math/big`.
+
+    **`New() *dsa`** — generates DSA parameters (p, q, g) and a random key pair (private key x, public key y). Panics if `crypto/rand` fails during parameter generation.
+
+    **`Sign(m []byte, p, q, g, x *big.Int) (r, s *big.Int)`** — produces a signature pair (r, s) for message bytes `m` using the private key `x` and domain parameters. `m` is used directly as a big integer (no hashing is applied in this implementation; callers should hash the message before passing it).
+
+    **`Verify(m []byte, r, s, p, q, g, y *big.Int) bool`** — returns `true` if (r, s) is a valid signature for `m` under public key `y`.
+
+    **`(*dsa).GetPublicKey() *big.Int`**, **`GetPrivateKey() *big.Int`**, **`GetParameters() parameters`** — accessors for the generated key material.
+
+    ```go
+    import (
+        "crypto/sha256"
+        "github.com/TheAlgorithms/Go/cipher/dsa"
+    )
+
+    d := dsa.New()
+    params := d.GetParameters()
+
+    message := []byte("hello")
+    digest  := sha256.Sum256(message)
+
+    r, s := dsa.Sign(digest[:], params.P, params.Q, params.G, d.GetPrivateKey())
+
+    valid := dsa.Verify(digest[:], r, s, params.P, params.Q, params.G, d.GetPublicKey())
+    // valid: true
+    ```
+
+    <Warning>
+      `Sign` and `Verify` accept raw bytes and treat them as a big integer without applying a hash function internally. Always hash your message before signing to avoid known attacks on unhashed DSA.
+    </Warning>
+  </Accordion>
+
+</AccordionGroup>

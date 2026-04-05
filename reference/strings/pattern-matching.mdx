@@ -1,0 +1,252 @@
+---
+title: "String Pattern Matching & Utilities"
+description: "Detailed reference for every string search algorithm, distance metric, and text-analysis utility in TheAlgorithms/Go."
+---
+
+<AccordionGroup>
+
+  <Accordion title="Aho-Corasick — multi-pattern search">
+    The `ahocorasick` package implements two variants of the Aho-Corasick automaton for simultaneously searching multiple patterns in a text string.
+
+    **`AhoCorasick(t string, p []string) Result`** — basic variant. Builds a trie from `p`, computes failure links, then scans `t` in a single pass. Returns a `Result` whose `occurrences` map associates each matched pattern with the list of start positions in `t`.
+
+    **`Advanced(t string, p []string) Result`** — extended variant. Builds a complete-transition automaton (`BuildExtendedAc`) so that every state has a defined transition for every character in the combined alphabet of `p`. Eliminates the inner failure-link traversal loop at match time.
+
+    ```go
+    import "github.com/TheAlgorithms/Go/strings/ahocorasick"
+
+    patterns := []string{"he", "she", "his", "hers"}
+    result := ahocorasick.AhoCorasick("ushers", patterns)
+
+    // Advanced variant (precomputes full alphabet transitions)
+    result2 := ahocorasick.Advanced("ushers", patterns)
+    ```
+
+    Both functions return the same `Result` type. Use `AhoCorasick` when the pattern set is small; prefer `Advanced` when you search many texts against the same patterns, as its automaton avoids repeated failure-link traversal.
+  </Accordion>
+
+  <Accordion title="KMP — Knuth-Morris-Pratt">
+    Package `kmp` implements the Knuth-Morris-Pratt algorithm.
+
+    **`Kmp(word, text string, patternTable []int) []int`** — returns the starting indices of all non-overlapping occurrences of `word` in `text`. The caller supplies a precomputed failure-function table (`patternTable`). Pass `nil` or compute it with the internal `table` helper as shown below.
+
+    **Time complexity:** O(n + m), where n = `len(text)` and m = `len(word)`.
+
+    ```go
+    import "github.com/TheAlgorithms/Go/strings/kmp"
+
+    // Build the failure table for the pattern, then search
+    pattern := "abcabc"
+    text    := "abcabcabcabc"
+
+    // patternTable is built internally; pass a pre-built one or use nil
+    positions := kmp.Kmp(pattern, text, nil)
+    // positions: [0, 3, 6]
+    ```
+  </Accordion>
+
+  <Accordion title="Boyer-Moore">
+    Package `search` contains `BoyerMoore`, a string search implementation combining the bad-character rule with the Apostolico-Giancarlo optimisation.
+
+    **`BoyerMoore(text string, pattern string) []int`** — returns the start positions of all occurrences of `pattern` in `text`.
+
+    **Time complexity:** O(n) amortised, where n = `len(text)`. The bad-character shift table is O(m) space for pattern length m.
+
+    ```go
+    import "github.com/TheAlgorithms/Go/strings/search"
+
+    positions := search.BoyerMoore("hello world hello", "hello")
+    // positions: [0, 12]
+    ```
+  </Accordion>
+
+  <Accordion title="Horspool — simplified Boyer-Moore">
+    Package `horspool` implements the Boyer-Moore-Horspool algorithm, a simplified variant of Boyer-Moore that uses only the bad-character shift table.
+
+    **`Horspool(t, p string) (int, error)`** — returns the index of the first occurrence of pattern `p` in text `t`. Returns `(-1, ErrNotFound)` when no match exists. Input strings are converted to `[]rune` internally, so multi-byte Unicode characters are handled correctly.
+
+    ```go
+    import "github.com/TheAlgorithms/Go/strings/horspool"
+
+    idx, err := horspool.Horspool("hello world", "world")
+    if err != nil {
+        // horspool.ErrNotFound
+    }
+    // idx: 6
+    ```
+  </Accordion>
+
+  <Accordion title="Naive search">
+    Package `search` also provides `Naive`, a straightforward brute-force substring search.
+
+    **`Naive(text string, pattern string) []int`** — slides `pattern` over `text` one position at a time and returns all start positions where a full match is found.
+
+    **Time complexity:** O(n × m), where n = `len(text)` and m = `len(pattern)`.
+
+    ```go
+    import "github.com/TheAlgorithms/Go/strings/search"
+
+    positions := search.Naive("abababab", "abab")
+    // positions: [0, 2, 4]
+    ```
+
+    <Tip>
+      Prefer `BoyerMoore` or `Horspool` for longer texts. `Naive` is useful as a reference implementation or for very short patterns.
+    </Tip>
+  </Accordion>
+
+  <Accordion title="Manacher — longest palindromic substring">
+    Package `manacher` implements Manacher's algorithm, which finds the longest palindromic substring in linear time.
+
+    **`LongestPalindrome(s string) string`** — inserts boundary characters (`#`) between every character of `s` (spaces are ignored), runs the palindrome-radius scan, then strips the boundaries from the result. Returns the longest palindromic substring of `s`.
+
+    **Time complexity:** O(n).
+
+    ```go
+    import "github.com/TheAlgorithms/Go/strings/manacher"
+
+    result := manacher.LongestPalindrome("babad")
+    // result: "bab" or "aba" (first longest found)
+
+    result2 := manacher.LongestPalindrome("racecar")
+    // result2: "racecar"
+    ```
+  </Accordion>
+
+  <Accordion title="Levenshtein — edit distance">
+    Package `levenshtein` computes the edit distance between two strings using a dynamic-programming approach with configurable operation costs.
+
+    **`Distance(str1, str2 string, icost, scost, dcost int) int`** — returns the minimum number of weighted edits (insertions at cost `icost`, substitutions at cost `scost`, deletions at cost `dcost`) required to transform `str1` into `str2`.
+
+    **Time complexity:** O(n × m). **Space complexity:** O(m) — only two rows of the DP table are kept in memory.
+
+    ```go
+    import "github.com/TheAlgorithms/Go/strings/levenshtein"
+
+    // Uniform cost: each operation costs 1
+    dist := levenshtein.Distance("kitten", "sitting", 1, 1, 1)
+    // dist: 3
+
+    // Custom weights
+    dist2 := levenshtein.Distance("kitten", "sitting", 1, 2, 1)
+    ```
+  </Accordion>
+
+  <Accordion title="Utilities — IsPalindrome, IsPangram, IsIsogram, IsSubsequence, Parenthesis, CountChars">
+    Several utility functions are available directly in the `strings` package and its sub-packages.
+
+    **`palindrome.IsPalindrome(text string) bool`** — strips punctuation, spaces, and case, then checks iteratively whether the result reads the same forwards and backwards.
+
+    **`palindrome.IsPalindromeRecursive(text string) bool`** — same normalisation, recursive implementation.
+
+    ```go
+    import "github.com/TheAlgorithms/Go/strings/palindrome"
+
+    palindrome.IsPalindrome("Do geese see God?") // true
+    palindrome.IsPalindrome("racecar")            // true
+    ```
+
+    **`pangram.IsPangram(text string) bool`** — returns `true` if `text` contains all 26 letters of the English alphabet (case-insensitive).
+
+    ```go
+    import "github.com/TheAlgorithms/Go/strings/pangram"
+
+    pangram.IsPangram("The quick brown fox jumps over the lazy dog") // true
+    ```
+
+    **`IsIsogram(text string, order IsogramOrder) (bool, error)`** — checks whether every letter in `text` appears exactly `order` times (`First` = once, `Second` = twice, `Third` = three times). Returns an error if the text contains digits or symbols.
+
+    ```go
+    import str "github.com/TheAlgorithms/Go/strings"
+
+    ok, err := str.IsIsogram("dermatoglyphics", str.First) // true, nil
+    ok, err  = str.IsIsogram("Seeress", str.Second)         // true, nil
+    ```
+
+    **`IsSubsequence(s string, t string) bool`** — returns `true` if `s` can be derived from `t` by deleting zero or more characters without changing the order of the remaining characters.
+
+    ```go
+    import str "github.com/TheAlgorithms/Go/strings"
+
+    str.IsSubsequence("dpr", "depqr") // true
+    str.IsSubsequence("drp", "depqr") // false
+    ```
+
+    **`parenthesis.Parenthesis(text string) bool`** — returns `true` if every `(` in `text` has a matching `)` in the correct order.
+
+    ```go
+    import "github.com/TheAlgorithms/Go/strings/parenthesis"
+
+    parenthesis.Parenthesis("(a + (b * c))")  // true
+    parenthesis.Parenthesis("(a + b) * c)")   // false
+    ```
+
+    **`CountChars(text string) map[rune]int`** — returns a map from each rune in `text` to the number of times it appears.
+
+    ```go
+    import str "github.com/TheAlgorithms/Go/strings"
+
+    counts := str.CountChars("hello")
+    // counts: map['h':1 'e':1 'l':2 'o':1]
+    ```
+  </Accordion>
+
+  <Accordion title="Hamming distance">
+    Package `hamming` computes the Hamming distance between two equal-length strings — the number of positions at which the corresponding characters differ.
+
+    **`Distance(str1, str2 string) (int, error)`** — returns the Hamming distance, or an error if the strings are not the same length. The implementation compares bytes directly (not runes), so it is accurate for ASCII strings.
+
+    **Time complexity:** O(n).
+
+    ```go
+    import "github.com/TheAlgorithms/Go/strings/hamming"
+
+    d, err := hamming.Distance("karolin", "kathrin")
+    // d: 3, err: nil
+
+    _, err = hamming.Distance("abc", "ab")
+    // err: "strings must have a same length"
+    ```
+  </Accordion>
+
+  <Accordion title="Genetic string — evolutionary string generation">
+    Package `genetic` uses a genetic algorithm to evolve a population of random strings toward a specified target string.
+
+    **`GeneticString(target string, charmap []rune, conf *Conf) (*Result, error)`** — repeatedly selects, crossovers, and mutates individuals in the population until one individual's `Key` equals `target`. Returns a `*Result` containing the number of generations, total individuals analysed, and the best-matching `PopulationItem`.
+
+    The `Conf` struct controls population size (`PopulationNum`, default 200), selection size (`SelectionNum`, default 50), mutation probability (`MutationProb`, default 0.4), and debug output (`Debug`).
+
+    ```go
+    import "github.com/TheAlgorithms/Go/strings/genetic"
+
+    charmap := []rune("abcdefghijklmnopqrstuvwxyz ")
+    result, err := genetic.GeneticString("hello world", charmap, &genetic.Conf{})
+    if err != nil {
+        // handle error
+    }
+    // result.Best.Key == "hello world"
+    // result.Generation: number of generations needed
+    ```
+
+    <Warning>
+      The target string must consist only of characters present in `charmap`, and the length of each individual in the initial population is assumed to equal `len(target)`. Passing a character in `target` that is not in `charmap` returns an error.
+    </Warning>
+  </Accordion>
+
+  <Accordion title="GUID — random UUID generation">
+    Package `guid` generates random version-4 UUIDs (globally unique identifiers).
+
+    **`New() (string, error)`** — returns a randomly generated UUID string in the standard `xxxxxxxx-xxxx-4xxx-xxxx-xxxxxxxxxxxx` format. Uses `crypto/rand` for cryptographically secure random bytes. The version digit (`4`) at position 14 is always fixed.
+
+    ```go
+    import "github.com/TheAlgorithms/Go/strings/guid"
+
+    id, err := guid.New()
+    if err != nil {
+        // crypto/rand failure
+    }
+    // id: e.g. "a3f1c2d4-9b87-4e6a-bf12-0c3a7e9d5f21"
+    ```
+  </Accordion>
+
+</AccordionGroup>

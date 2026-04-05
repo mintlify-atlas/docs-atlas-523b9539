@@ -1,0 +1,364 @@
+---
+title: "String & Sequence DP Problems"
+description: "Go implementations of dynamic programming problems on strings and sequences: LCS, edit distance, LIS, longest palindromic subsequence, and abbreviation matching."
+---
+
+**Import:** `github.com/TheAlgorithms/Go/dynamic`
+
+This page covers problems involving strings and sequences in the `dynamic` package. These algorithms find optimal subsequences, measure string similarity, and check structural relationships between strings.
+
+## Complexity overview
+
+| Algorithm | Function(s) | Time complexity | Space complexity |
+|---|---|---|---|
+| Longest Common Subsequence | `LongestCommonSubsequence` | O(m × n) | O(m × n) |
+| Edit Distance (recursive) | `EditDistanceRecursive` | O(3^max(m,n)) | O(max(m,n)) stack |
+| Edit Distance (DP) | `EditDistanceDP` | O(m × n) | O(m × n) |
+| Longest Increasing Subsequence | `LongestIncreasingSubsequence` | O(n²) | O(n) |
+| LIS (greedy + binary search) | `LongestIncreasingSubsequenceGreedy` | O(n log n) | O(n) |
+| Longest Palindromic Subsequence (recursive) | `LpsRec` | O(2ⁿ) | O(n) stack |
+| Longest Palindromic Subsequence (DP) | `LpsDp` | O(n²) | O(n²) |
+| Abbreviation | `Abbreviation` | O(n × m) | O(n × m) |
+
+<AccordionGroup>
+
+  <Accordion title="LongestCommonSubsequence — LCS length">
+
+    Find the length of the longest subsequence present in both strings `a` and `b`. A subsequence is a sequence of characters that appear in the same relative order in both strings, but not necessarily contiguously.
+
+    ```go
+    func LongestCommonSubsequence(a string, b string) int
+    ```
+
+    | Parameter | Type | Description |
+    |---|---|---|
+    | `a` | `string` | First string |
+    | `b` | `string` | Second string |
+
+    **Returns:** the length of the longest common subsequence.
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        "github.com/TheAlgorithms/Go/dynamic"
+    )
+
+    func main() {
+        fmt.Println(dynamic.LongestCommonSubsequence("ABCBDAB", "BDCAB")) // 4
+        // LCS is "BCAB" or "BDAB"
+
+        fmt.Println(dynamic.LongestCommonSubsequence("AGGTAB", "GXTXAYB")) // 4
+        // LCS is "GTAB"
+    }
+    ```
+
+    The implementation uses Unicode-safe rune slices, so it handles multibyte characters correctly.
+
+    **Complexity:** Time O(m × n), Space O(m × n), where m and n are the lengths of `a` and `b`.
+
+  </Accordion>
+
+  <Accordion title="EditDistanceRecursive / EditDistanceDP — Levenshtein distance">
+
+    Compute the minimum number of single-character edits (insertions, deletions, or substitutions) required to transform string `first` into string `second`. Two implementations are provided.
+
+    ```go
+    func EditDistanceRecursive(first string, second string, pointerFirst int, pointerSecond int) int
+    func EditDistanceDP(first string, second string) int
+    ```
+
+    | Parameter | Type | Description |
+    |---|---|---|
+    | `first` | `string` | Source string |
+    | `second` | `string` | Target string |
+    | `pointerFirst` | `int` | For recursive variant: start with `len(first)` |
+    | `pointerSecond` | `int` | For recursive variant: start with `len(second)` |
+
+    **Returns:** the edit distance (minimum number of operations).
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        "github.com/TheAlgorithms/Go/dynamic"
+    )
+
+    func main() {
+        a, b := "saturday", "sunday"
+
+        // Recursive (exponential — educational use only)
+        rec := dynamic.EditDistanceRecursive(a, b, len(a), len(b))
+        fmt.Println(rec) // 3
+
+        // DP (efficient)
+        dp := dynamic.EditDistanceDP(a, b)
+        fmt.Println(dp) // 3
+    }
+    ```
+
+    <Note>
+    `EditDistanceRecursive` recomputes subproblems without caching, resulting in exponential time. Use `EditDistanceDP` for any practical input size.
+    </Note>
+
+    **Complexity:**
+    - `EditDistanceRecursive`: Time O(3^max(m,n)), Space O(max(m,n)) recursion stack
+    - `EditDistanceDP`: Time O(m × n), Space O(m × n)
+
+  </Accordion>
+
+  <Accordion title="LongestIncreasingSubsequence / LongestIncreasingSubsequenceGreedy — LIS length">
+
+    Find the length of the longest strictly increasing subsequence in an integer array. Two implementations are provided with different time complexity tradeoffs.
+
+    ```go
+    func LongestIncreasingSubsequence(elements []int) int
+    func LongestIncreasingSubsequenceGreedy(nums []int) int
+    ```
+
+    | Parameter | Type | Description |
+    |---|---|---|
+    | `elements` / `nums` | `[]int` | Input integer array |
+
+    **Returns:** the length of the longest strictly increasing subsequence.
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        "github.com/TheAlgorithms/Go/dynamic"
+    )
+
+    func main() {
+        arr := []int{10, 9, 2, 5, 3, 7, 101, 18}
+
+        dp     := dynamic.LongestIncreasingSubsequence(arr)
+        greedy := dynamic.LongestIncreasingSubsequenceGreedy(arr)
+
+        fmt.Println(dp, greedy) // 4 4
+        // One LIS: [2, 3, 7, 18]
+    }
+    ```
+
+    **How they differ:**
+
+    - `LongestIncreasingSubsequence` fills a `lis[i]` table where `lis[i]` is the length of the longest increasing subsequence ending at index `i`. O(n²) time.
+    - `LongestIncreasingSubsequenceGreedy` maintains a patience-sorting array and uses binary search (`lowerBound`) to replace elements, achieving O(n log n) time.
+
+    <Tip>
+    For large inputs, prefer `LongestIncreasingSubsequenceGreedy`. Both functions return the same length, but the greedy version's internal array does not necessarily represent a valid subsequence.
+    </Tip>
+
+    **Complexity:**
+    - `LongestIncreasingSubsequence`: Time O(n²), Space O(n)
+    - `LongestIncreasingSubsequenceGreedy`: Time O(n log n), Space O(n)
+
+  </Accordion>
+
+  <Accordion title="LpsRec / LpsDp — longest palindromic subsequence">
+
+    Find the length of the longest subsequence of a string that is also a palindrome.
+
+    ```go
+    func LpsRec(word string) int
+    func LpsDp(word string) int
+    ```
+
+    | Parameter | Type | Description |
+    |---|---|---|
+    | `word` | `string` | Input string |
+
+    **Returns:** the length of the longest palindromic subsequence.
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        "github.com/TheAlgorithms/Go/dynamic"
+    )
+
+    func main() {
+        word := "BBABCBCAB"
+
+        rec := dynamic.LpsRec(word)
+        dp  := dynamic.LpsDp(word)
+
+        fmt.Println(rec, dp) // 7 7
+        // Longest palindromic subsequence: "BABCBAB"
+    }
+    ```
+
+    <Note>
+    `LpsRec` uses overlapping recursion without memoization. Its time complexity is exponential. Use `LpsDp` for any string of non-trivial length.
+    </Note>
+
+    **Complexity:**
+    - `LpsRec`: Time O(2ⁿ), Space O(n) recursion stack
+    - `LpsDp`: Time O(n²), Space O(n²)
+
+  </Accordion>
+
+  <Accordion title="Abbreviation — abbreviation matching">
+
+    Determine whether string `b` is a valid abbreviation of string `a`. The following operations can be applied to `a`:
+
+    1. Capitalize zero or more lowercase letters.
+    2. Delete all remaining lowercase letters.
+
+    If the result equals `b`, then `b` is an abbreviation of `a`.
+
+    ```go
+    func Abbreviation(a string, b string) bool
+    ```
+
+    | Parameter | Type | Description |
+    |---|---|---|
+    | `a` | `string` | Source string (may contain upper and lowercase letters) |
+    | `b` | `string` | Target string (uppercase letters only) |
+
+    **Returns:** `true` if `b` is a valid abbreviation of `a`, `false` otherwise.
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        "github.com/TheAlgorithms/Go/dynamic"
+    )
+
+    func main() {
+        // Capitalize 'c' and 'd' in "ABcde" → "ABCDe", then drop 'e' → "ABCD"
+        fmt.Println(dynamic.Abbreviation("ABcde", "ABCD")) // true
+
+        // Cannot produce "ABCD" from "dBcd"
+        fmt.Println(dynamic.Abbreviation("dBcd", "ABCD")) // false
+
+        // All lowercase dropped, all uppercase kept
+        fmt.Println(dynamic.Abbreviation("abcXYZ", "XYZ")) // true
+    }
+    ```
+
+    The DP table `dp[i][j]` tracks whether `b[0..j-1]` is achievable from `a[0..i-1]`.
+
+    **Complexity:** Time O(n × m), Space O(n × m), where n = `len(a)` and m = `len(b)`.
+
+  </Accordion>
+
+  <Accordion title="Longest Palindromic Substring — LongestPalindromicSubstring">
+
+Returns the longest contiguous palindromic substring (not subsequence) within `s`.
+
+```go
+func LongestPalindromicSubstring(s string) string
+```
+
+| | Complexity |
+|---|---|
+| **Time** | O(n²) |
+| **Space** | O(n²) |
+
+```go
+import "github.com/TheAlgorithms/Go/dynamic"
+
+sub := dynamic.LongestPalindromicSubstring("babad")
+// sub: "bab" (or "aba")
+```
+
+<Tip>For the longest palindromic **subsequence** (non-contiguous), use `LpsDp` instead.</Tip>
+
+  </Accordion>
+
+  <Accordion title="Wildcard Matching — IsMatch">
+
+Check if string `s` matches wildcard pattern `p`, where `?` matches any single character and `*` matches any sequence (including empty).
+
+```go
+func IsMatch(s, p string) bool
+```
+
+| | Complexity |
+|---|---|
+| **Time** | O(m × n) |
+| **Space** | O(m × n) |
+
+```go
+import "github.com/TheAlgorithms/Go/dynamic"
+
+dynamic.IsMatch("aa", "a*")   // true
+dynamic.IsMatch("cb", "?a")   // false
+dynamic.IsMatch("adceb", "*a*b") // true
+```
+
+  </Accordion>
+
+  <Accordion title="Word Break — WordBreak">
+
+Check whether string `s` can be segmented into one or more words from `wordDict`.
+
+```go
+func WordBreak(s string, wordDict []string) bool
+```
+
+| | Complexity |
+|---|---|
+| **Time** | O(n²) |
+| **Space** | O(n) |
+
+```go
+import "github.com/TheAlgorithms/Go/dynamic"
+
+ok := dynamic.WordBreak("leetcode", []string{"leet", "code"})
+// ok: true
+```
+
+  </Accordion>
+
+  <Accordion title="Interleaving Strings — IsInterleave">
+
+Determine if `s3` is formed by interleaving `s1` and `s2` (characters from each string appear in their original relative order).
+
+```go
+func IsInterleave(s1, s2, s3 string) bool
+```
+
+| | Complexity |
+|---|---|
+| **Time** | O(m × n) |
+| **Space** | O(m × n) |
+
+```go
+import "github.com/TheAlgorithms/Go/dynamic"
+
+ok := dynamic.IsInterleave("aab", "axy", "aaxaby")
+// ok: true
+```
+
+  </Accordion>
+
+  <Accordion title="Longest Arithmetic Subsequence — LongestArithmeticSubsequence">
+
+Find the length of the longest subsequence in `nums` where consecutive elements have a constant difference.
+
+```go
+func LongestArithmeticSubsequence(nums []int) int
+```
+
+| | Complexity |
+|---|---|
+| **Time** | O(n²) |
+| **Space** | O(n²) |
+
+```go
+import "github.com/TheAlgorithms/Go/dynamic"
+
+length := dynamic.LongestArithmeticSubsequence([]int{3, 6, 9, 12})
+// length: 4
+```
+
+  </Accordion>
+
+</AccordionGroup>

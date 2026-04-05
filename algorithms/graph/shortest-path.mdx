@@ -1,0 +1,275 @@
+---
+title: "Shortest Path Algorithms"
+description: "Dijkstra, Bellman-Ford, Floyd-Warshall, and Edmond-Karp maximum flow — signatures, when to use each, complexity, and Go examples."
+---
+
+The `graph` package provides four algorithms for finding shortest paths and maximum flow in weighted graphs. Choose the right one based on graph properties such as negative weights, the number of sources, and required output.
+
+## Algorithm comparison
+
+| Algorithm | Graph type | Negative weights | Negative cycles | Output | Time | Space |
+|-----------|-----------|-----------------|-----------------|--------|------|-------|
+| **Dijkstra** | Directed / undirected | No | No | Single-source to one target | O((V + E) log V) | O(V) |
+| **Bellman-Ford** | Directed | Yes | Detected | Single-source to one target | O(V × E) | O(V) |
+| **Floyd-Warshall** | Directed / undirected | Yes | Not detected | All-pairs | O(V³) | O(V²) |
+| **Edmond-Karp** | Directed (capacities) | N/A | N/A | Maximum flow between source and sink | O(V × E²) | O(V + E) |
+
+<Tip>
+Use **Dijkstra** when all weights are non-negative and you need the single-source shortest path fast. Switch to **Bellman-Ford** when negative edge weights are present. Use **Floyd-Warshall** when you need shortest distances between every pair of vertices and the graph is small (V ≲ 500).
+</Tip>
+
+<AccordionGroup>
+
+  <Accordion title="Dijkstra">
+
+Dijkstra's algorithm finds the shortest path from a single source vertex to a single target in a graph with non-negative edge weights. The implementation uses a min-heap (priority queue) for efficient vertex selection.
+
+**Signature**
+
+```go
+func (g *Graph) Dijkstra(start, end int) (int, bool)
+```
+
+- `start` — source vertex
+- `end` — target vertex
+- Returns `(distance, true)` when a path exists, `(-1, false)` otherwise
+
+**Complexity**
+
+| | |
+|--|--|
+| Time | O((V + E) log V) |
+| Space | O(V) |
+
+**When to use**
+
+- All edge weights are non-negative
+- You need the shortest path from one source to one target
+- Graph is sparse (E much less than V²)
+
+**Example**
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/TheAlgorithms/Go/graph"
+)
+
+func main() {
+    g := graph.New(5)
+    g.Directed = true
+    g.AddWeightedEdge(0, 1, 4)
+    g.AddWeightedEdge(0, 2, 1)
+    g.AddWeightedEdge(2, 1, 2)
+    g.AddWeightedEdge(1, 3, 1)
+    g.AddWeightedEdge(2, 3, 5)
+
+    dist, ok := g.Dijkstra(0, 3)
+    fmt.Println(ok, dist) // true 4  (path: 0→2→1→3, cost 1+2+1)
+}
+```
+
+<Warning>
+Dijkstra produces incorrect results when the graph contains negative-weight edges. Use Bellman-Ford in that case.
+</Warning>
+
+  </Accordion>
+
+  <Accordion title="Bellman-Ford">
+
+Bellman-Ford computes shortest paths from a single source to all other vertices in a directed graph with potentially negative edge weights. It also detects negative-weight cycles, which make shortest paths undefined.
+
+**Signature**
+
+```go
+func (g *Graph) BellmanFord(start, end int) (isReachable bool, distance int, err error)
+```
+
+- `start` — source vertex
+- `end` — target vertex
+- Returns `(true, distance, nil)` when a shortest path exists
+- Returns `(false, -1, error)` when a negative-weight cycle is detected
+- Returns `(false, distance, nil)` when `end` is unreachable from `start`
+
+**Complexity**
+
+| | |
+|--|--|
+| Time | O(V × E) |
+| Space | O(V) |
+
+**When to use**
+
+- Edge weights may be negative
+- You need to detect negative-weight cycles
+- Performance is less critical than correctness with negative weights
+
+**Example**
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/TheAlgorithms/Go/graph"
+)
+
+func main() {
+    g := graph.New(4)
+    g.Directed = true
+    g.AddWeightedEdge(0, 1, 1)
+    g.AddWeightedEdge(1, 2, -3)
+    g.AddWeightedEdge(2, 3, 2)
+    g.AddWeightedEdge(0, 3, 10)
+
+    reachable, dist, err := g.BellmanFord(0, 3)
+    if err != nil {
+        fmt.Println("negative cycle detected:", err)
+    } else {
+        fmt.Println(reachable, dist) // true 0  (path: 0→1→2→3, cost 1-3+2)
+    }
+}
+```
+
+```go
+// Negative-weight cycle example
+g2 := graph.New(3)
+g2.Directed = true
+g2.AddWeightedEdge(0, 1, 1)
+g2.AddWeightedEdge(1, 2, -5)
+g2.AddWeightedEdge(2, 0, 2) // cycle total: 1-5+2 = -2
+
+_, _, err := g2.BellmanFord(0, 2)
+fmt.Println(err) // negative weight cycle present
+```
+
+  </Accordion>
+
+  <Accordion title="Floyd-Warshall">
+
+Floyd-Warshall computes the shortest path between every pair of vertices in a single run. It accepts a `WeightedGraph` (a 2D `float64` slice) where `graph[i][j]` is the direct edge weight from `i` to `j`, or `graph.Inf` if no direct edge exists.
+
+**Signature**
+
+```go
+type WeightedGraph [][]float64
+
+var Inf = math.Inf(1)
+
+func FloydWarshall(graph WeightedGraph) WeightedGraph
+```
+
+- Input: square `WeightedGraph` matrix; `graph[i][i]` should be `0`, missing edges use `graph.Inf`
+- Returns the all-pairs shortest-path distance matrix, or `nil` for invalid input
+
+**Complexity**
+
+| | |
+|--|--|
+| Time | O(V³) |
+| Space | O(V²) |
+
+**When to use**
+
+- You need shortest paths between all pairs of vertices
+- The graph is dense or V is small (V ≲ 500)
+- Negative edge weights are present (but no negative cycles)
+
+**Example**
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/TheAlgorithms/Go/graph"
+)
+
+func main() {
+    INF := graph.Inf
+
+    // 4-vertex graph represented as an adjacency matrix
+    g := graph.WeightedGraph{
+        {0, 3, INF, 7},
+        {8, 0, 2, INF},
+        {5, INF, 0, 1},
+        {2, INF, INF, 0},
+    }
+
+    result := graph.FloydWarshall(g)
+
+    // Shortest path from vertex 0 to vertex 2
+    fmt.Println(result[0][2]) // 5.0  (0→1→2, cost 3+2)
+    // Shortest path from vertex 3 to vertex 1
+    fmt.Println(result[3][1]) // 5.0  (3→0→1, cost 2+3)
+}
+```
+
+<Note>
+Floyd-Warshall does not detect negative cycles; it will silently produce incorrect results if one exists. Use Bellman-Ford if negative cycles are a concern.
+</Note>
+
+  </Accordion>
+
+  <Accordion title="Edmond-Karp (Maximum Flow)">
+
+Edmond-Karp is an implementation of the Ford-Fulkerson maximum flow method that uses BFS to find augmenting paths in the residual graph. It computes the maximum flow from a source vertex to a sink vertex in a directed capacity graph.
+
+**Signatures**
+
+```go
+func EdmondKarp(graph WeightedGraph, source int, sink int) float64
+
+func FindPath(rGraph WeightedGraph, source int, sink int) map[int]int
+```
+
+- `graph` — square capacity matrix; `graph[u][v]` is the capacity of edge `u → v`
+- `source` — source vertex index
+- `sink` — sink vertex index
+- Returns the maximum flow value as `float64`
+- `FindPath` is a helper that runs BFS on the residual graph and returns the augmenting path as a parent map; returns `nil` if no path exists
+
+**Complexity**
+
+| | |
+|--|--|
+| Time | O(V × E²) |
+| Space | O(V + E) |
+
+**When to use**
+
+- Computing maximum flow / minimum cut in a network
+- Bipartite matching (model as a flow network)
+- Any problem reducible to max-flow
+
+**Example**
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/TheAlgorithms/Go/graph"
+)
+
+func main() {
+    // Capacity matrix for a 6-node flow network
+    g := graph.WeightedGraph{
+        {0, 16, 13, 0, 0, 0},
+        {0, 0, 10, 12, 0, 0},
+        {0, 4, 0, 0, 14, 0},
+        {0, 0, 9, 0, 0, 20},
+        {0, 0, 0, 7, 0, 4},
+        {0, 0, 0, 0, 0, 0},
+    }
+
+    maxFlow := graph.EdmondKarp(g, 0, 5)
+    fmt.Println(maxFlow) // 23
+}
+```
+
+  </Accordion>
+
+</AccordionGroup>

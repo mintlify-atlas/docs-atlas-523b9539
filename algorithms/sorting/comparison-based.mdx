@@ -1,0 +1,634 @@
+---
+title: "Comparison-based sorting"
+description: "Deep dive into comparison-based sorting algorithms in TheAlgorithms/Go: signatures, complexity, explanations, and working Go examples."
+---
+
+Comparison-based sorting algorithms determine order by comparing pairs of elements using `<` or `>`. All functions in this page accept a slice constrained by `constraints.Ordered` (or `constraints.Number` where noted) and return the sorted slice in place.
+
+```go
+import "github.com/TheAlgorithms/Go/sort"
+```
+
+<Note>
+All functions sort in ascending order and modify the input slice in place. The return value is the same slice, allowing chaining.
+</Note>
+
+---
+
+<AccordionGroup>
+
+  <Accordion title="Bubble sort">
+
+    ```go
+    func Bubble[T constraints.Ordered](arr []T) []T
+    ```
+
+    | Property | Value |
+    |---|---|
+    | Best case | O(n) |
+    | Average case | O(n²) |
+    | Worst case | O(n²) |
+    | Space | O(1) |
+    | Stable | Yes |
+
+    **How it works.** Bubble sort makes repeated passes through the slice, swapping adjacent elements that are out of order. The optimised implementation here tracks a `swapped` flag and exits early when no swaps occur in a pass, giving O(n) performance on already-sorted input.
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        gosort "github.com/TheAlgorithms/Go/sort"
+    )
+
+    func main() {
+        nums := []int{5, 3, 8, 1, 9, 2}
+        sorted := gosort.Bubble(nums)
+        fmt.Println(sorted) // [1 2 3 5 8 9]
+    }
+    ```
+
+  </Accordion>
+
+  <Accordion title="Insertion sort">
+
+    ```go
+    func Insertion[T constraints.Ordered](arr []T) []T
+    ```
+
+    | Property | Value |
+    |---|---|
+    | Best case | O(n) |
+    | Average case | O(n²) |
+    | Worst case | O(n²) |
+    | Space | O(1) |
+    | Stable | Yes |
+
+    **How it works.** Starting from the second element, Insertion sort picks each element and shifts larger elements rightward until the correct position is found. It is efficient for small slices and nearly-sorted data. Timsort uses Insertion sort internally for short runs.
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        gosort "github.com/TheAlgorithms/Go/sort"
+    )
+
+    func main() {
+        words := []string{"banana", "apple", "cherry", "date"}
+        sorted := gosort.Insertion(words)
+        fmt.Println(sorted) // [apple banana cherry date]
+    }
+    ```
+
+  </Accordion>
+
+  <Accordion title="Binary Insertion sort">
+
+    ```go
+    func BinaryInsertion[T constraints.Ordered](arr []T) []T
+    ```
+
+    | Property | Value |
+    |---|---|
+    | Best case | O(n log n) comparisons |
+    | Average case | O(n²) shifts |
+    | Worst case | O(n²) |
+    | Space | O(1) |
+    | Stable | Yes |
+
+    **How it works.** Binary Insertion sort is a variant of Insertion sort that uses binary search to locate the insertion point for each element, reducing the number of comparisons from O(n) to O(log n) per element. The total number of element shifts remains O(n²), so overall time complexity is still O(n²). This variant is beneficial when comparisons are expensive.
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        gosort "github.com/TheAlgorithms/Go/sort"
+    )
+
+    func main() {
+        nums := []int{29, 10, 14, 37, 13}
+        sorted := gosort.BinaryInsertion(nums)
+        fmt.Println(sorted) // [10 13 14 29 37]
+    }
+    ```
+
+  </Accordion>
+
+  <Accordion title="Selection sort">
+
+    ```go
+    func Selection[T constraints.Ordered](arr []T) []T
+    ```
+
+    | Property | Value |
+    |---|---|
+    | Best case | O(n²) |
+    | Average case | O(n²) |
+    | Worst case | O(n²) |
+    | Space | O(1) |
+    | Stable | No |
+
+    **How it works.** Selection sort divides the slice into a sorted prefix and an unsorted suffix. On each iteration it scans the unsorted suffix to find the minimum element and swaps it into the next position of the sorted prefix. It always performs exactly n−1 swaps regardless of input, making it useful when swaps are expensive.
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        gosort "github.com/TheAlgorithms/Go/sort"
+    )
+
+    func main() {
+        nums := []float64{3.1, 1.4, 2.7, 0.5}
+        sorted := gosort.Selection(nums)
+        fmt.Println(sorted) // [0.5 1.4 2.7 3.1]
+    }
+    ```
+
+  </Accordion>
+
+  <Accordion title="Shell sort">
+
+    ```go
+    func Shell[T constraints.Ordered](arr []T) []T
+    ```
+
+    | Property | Value |
+    |---|---|
+    | Best case | O(n log n) |
+    | Average case | O(n log² n) |
+    | Worst case | O(n²) |
+    | Space | O(1) |
+    | Stable | No |
+
+    **How it works.** Shell sort generalises Insertion sort by sorting elements at a decreasing gap distance apart, starting at n/2 and halving the gap on each pass. This moves elements toward their final position quickly, leaving a nearly-sorted array for a final gap-1 (plain Insertion sort) pass. Performance depends on the gap sequence; this implementation uses the simple halving sequence.
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        gosort "github.com/TheAlgorithms/Go/sort"
+    )
+
+    func main() {
+        nums := []int{12, 34, 54, 2, 3}
+        sorted := gosort.Shell(nums)
+        fmt.Println(sorted) // [2 3 12 34 54]
+    }
+    ```
+
+  </Accordion>
+
+  <Accordion title="Heap sort">
+
+    ```go
+    func HeapSort[T constraints.Ordered](slice []T) []T
+    ```
+
+    The package also exports a `MaxHeap` type for use as a priority queue:
+
+    ```go
+    type MaxHeap struct { /* ... */ }
+
+    func (h *MaxHeap) Init(slice []Comparable)
+    func (h *MaxHeap) Push(i Comparable)
+    func (h *MaxHeap) Pop() Comparable
+    func (h *MaxHeap) Update(i Comparable)
+    func (h MaxHeap) Size() int
+    ```
+
+    | Property | Value |
+    |---|---|
+    | Best case | O(n log n) |
+    | Average case | O(n log n) |
+    | Worst case | O(n log n) |
+    | Space | O(1) |
+    | Stable | No |
+
+    **How it works.** Heap sort builds a max-heap from the input in O(n) time, then repeatedly extracts the maximum element, placing it at the end of the slice. The heap is re-heapified after each extraction. The result is a sorted slice with O(n log n) worst-case and O(1) extra space.
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        gosort "github.com/TheAlgorithms/Go/sort"
+    )
+
+    func main() {
+        nums := []int{4, 10, 3, 5, 1}
+        sorted := gosort.HeapSort(nums)
+        fmt.Println(sorted) // [1 3 4 5 10]
+    }
+    ```
+
+  </Accordion>
+
+  <Accordion title="Merge sort">
+
+    ```go
+    // Recursive merge sort
+    func Merge[T constraints.Ordered](items []T) []T
+
+    // Iterative (bottom-up) merge sort
+    func MergeIter[T constraints.Ordered](items []T) []T
+
+    // Parallel merge sort using goroutines (falls back to Merge for n < 2048)
+    func ParallelMerge[T constraints.Ordered](items []T) []T
+    ```
+
+    | Property | Value |
+    |---|---|
+    | Best case | O(n log n) |
+    | Average case | O(n log n) |
+    | Worst case | O(n log n) |
+    | Space | O(n) |
+    | Stable | Yes |
+
+    **How it works.** `Merge` recursively divides the slice in half, sorts each half, then merges the two sorted halves into a new slice. `MergeIter` achieves the same result without recursion by iterating over increasing run sizes. `ParallelMerge` launches the left-half sort in a goroutine while the current goroutine handles the right half, then merges. For slices smaller than 2048 elements it falls back to sequential `Merge` to avoid goroutine scheduling overhead.
+
+    <Tabs>
+      <Tab title="Sequential">
+        ```go
+        package main
+
+        import (
+            "fmt"
+            gosort "github.com/TheAlgorithms/Go/sort"
+        )
+
+        func main() {
+            nums := []int{38, 27, 43, 3, 9, 82, 10}
+            sorted := gosort.Merge(nums)
+            fmt.Println(sorted) // [3 9 10 27 38 43 82]
+        }
+        ```
+      </Tab>
+      <Tab title="Iterative">
+        ```go
+        package main
+
+        import (
+            "fmt"
+            gosort "github.com/TheAlgorithms/Go/sort"
+        )
+
+        func main() {
+            nums := []int{38, 27, 43, 3, 9, 82, 10}
+            sorted := gosort.MergeIter(nums)
+            fmt.Println(sorted) // [3 9 10 27 38 43 82]
+        }
+        ```
+      </Tab>
+      <Tab title="Parallel">
+        ```go
+        package main
+
+        import (
+            "fmt"
+            gosort "github.com/TheAlgorithms/Go/sort"
+        )
+
+        func main() {
+            // ParallelMerge is most effective on large slices (>= 2048 elements)
+            nums := make([]int, 4096)
+            for i := range nums {
+                nums[i] = 4096 - i
+            }
+            sorted := gosort.ParallelMerge(nums)
+            fmt.Println(sorted[0], sorted[len(sorted)-1]) // 1 4096
+        }
+        ```
+      </Tab>
+    </Tabs>
+
+  </Accordion>
+
+  <Accordion title="Quick sort">
+
+    ```go
+    // Sort the entire slice
+    func Quicksort[T constraints.Ordered](arr []T) []T
+
+    // Sort a sub-range [low, high] of the slice
+    func QuicksortRange[T constraints.Ordered](arr []T, low, high int)
+
+    // Partition around a pivot; returns the pivot index
+    func Partition[T constraints.Ordered](arr []T, low, high int) int
+    ```
+
+    | Property | Value |
+    |---|---|
+    | Best case | O(n log n) |
+    | Average case | O(n log n) |
+    | Worst case | O(n²) |
+    | Space | O(log n) stack |
+    | Stable | No |
+
+    **How it works.** `Quicksort` delegates to `QuicksortRange` with the full index range. `QuicksortRange` partitions the sub-array around the last element as a pivot (Lomuto partition scheme), then recursively sorts the elements to the left and right of the pivot. The worst case O(n²) occurs on already-sorted or reverse-sorted input with this pivot selection.
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        gosort "github.com/TheAlgorithms/Go/sort"
+    )
+
+    func main() {
+        nums := []int{10, 7, 8, 9, 1, 5}
+        sorted := gosort.Quicksort(nums)
+        fmt.Println(sorted) // [1 5 7 8 9 10]
+
+        // Sort only index 1..3
+        data := []int{10, 7, 8, 9, 1, 5}
+        gosort.QuicksortRange(data, 1, 3)
+        fmt.Println(data) // [10 7 8 9 1 5] → middle sub-range sorted
+    }
+    ```
+
+    <Warning>
+    The Lomuto partition uses the last element as the pivot. On already-sorted or reverse-sorted input this degrades to O(n²). Consider shuffling the input before sorting if you frequently encounter sorted data.
+    </Warning>
+
+  </Accordion>
+
+  <Accordion title="Cocktail sort">
+
+    ```go
+    func Cocktail[T constraints.Ordered](arr []T) []T
+    ```
+
+    | Property | Value |
+    |---|---|
+    | Best case | O(n) |
+    | Average case | O(n²) |
+    | Worst case | O(n²) |
+    | Space | O(1) |
+    | Stable | Yes |
+
+    **How it works.** Cocktail sort (also called cocktail shaker sort or bidirectional bubble sort) extends Bubble sort by alternating the direction of each pass: one pass goes left-to-right, bubbling the largest unsorted element to the right; the next pass goes right-to-left, bubbling the smallest unsorted element to the left. Narrowing the active window on each pass avoids re-scanning elements already in their final positions.
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        gosort "github.com/TheAlgorithms/Go/sort"
+    )
+
+    func main() {
+        nums := []int{5, 1, 4, 2, 8, 0, 2}
+        sorted := gosort.Cocktail(nums)
+        fmt.Println(sorted) // [0 1 2 2 4 5 8]
+    }
+    ```
+
+  </Accordion>
+
+  <Accordion title="Comb sort">
+
+    ```go
+    func Comb[T constraints.Ordered](data []T) []T
+    ```
+
+    | Property | Value |
+    |---|---|
+    | Best case | O(n log n) |
+    | Average case | O(n²/2ᵖ) |
+    | Worst case | O(n²) |
+    | Space | O(1) |
+    | Stable | No |
+
+    **How it works.** Comb sort improves on Bubble sort by eliminating "turtles" — small values near the end of the list that take many passes to reach their correct position. It does this by comparing elements with a gap larger than 1, shrinking the gap by a factor of 1/1.3 on each pass until the gap reaches 1, at which point it behaves like Bubble sort with an early-exit flag.
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        gosort "github.com/TheAlgorithms/Go/sort"
+    )
+
+    func main() {
+        nums := []int{8, 4, 1, 56, 3, -44, 23, -6, 28, 0}
+        sorted := gosort.Comb(nums)
+        fmt.Println(sorted) // [-44 -6 0 1 3 4 8 23 28 56]
+    }
+    ```
+
+  </Accordion>
+
+  <Accordion title="Cycle sort">
+
+    ```go
+    func Cycle[T constraints.Number](arr []T) []T
+    ```
+
+    <Note>
+    `Cycle` is constrained to `constraints.Number` (not the broader `constraints.Ordered`) because its algorithm requires counting elements smaller than the current element to determine the correct position.
+    </Note>
+
+    | Property | Value |
+    |---|---|
+    | Best case | O(n²) |
+    | Average case | O(n²) |
+    | Worst case | O(n²) |
+    | Space | O(1) |
+    | Stable | No |
+
+    **How it works.** Cycle sort minimises the number of writes to the array. For each element it counts how many elements are smaller than it (finding its correct position), then rotates a cycle of displacements until each element lands on its correct position. The total number of writes is at most n − 1. This makes it useful when writes are significantly more expensive than reads.
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        gosort "github.com/TheAlgorithms/Go/sort"
+    )
+
+    func main() {
+        nums := []int{1, 8, 3, 9, 10, 10, 2, 4}
+        sorted := gosort.Cycle(nums)
+        fmt.Println(sorted) // [1 2 3 4 8 9 10 10]
+    }
+    ```
+
+  </Accordion>
+
+  <Accordion title="Timsort">
+
+    ```go
+    func Timsort[T constraints.Ordered](data []T) []T
+    ```
+
+    | Property | Value |
+    |---|---|
+    | Best case | O(n) |
+    | Average case | O(n log n) |
+    | Worst case | O(n log n) |
+    | Space | O(n) |
+    | Stable | Yes |
+
+    **How it works.** Timsort is a hybrid algorithm combining Insertion sort and Merge sort. It calculates a minimum run size (derived from the input length), applies Insertion sort to each run, then uses bottom-up Merge sort to merge adjacent runs of increasing sizes. It achieves O(n) on already-sorted or reverse-sorted input by producing a single run that requires no merging.
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        gosort "github.com/TheAlgorithms/Go/sort"
+    )
+
+    func main() {
+        nums := []int{5, 21, 7, 23, 19, 3, 18, 1, 14, 2}
+        sorted := gosort.Timsort(nums)
+        fmt.Println(sorted) // [1 2 3 5 7 14 18 19 21 23]
+    }
+    ```
+
+  </Accordion>
+
+  <Accordion title="Exchange sort">
+
+    ```go
+    func Exchange[T constraints.Ordered](arr []T) []T
+    ```
+
+    | Property | Value |
+    |---|---|
+    | Best case | O(n²) |
+    | Average case | O(n²) |
+    | Worst case | O(n²) |
+    | Space | O(1) |
+    | Stable | No |
+
+    **How it works.** Exchange sort compares each element with every element that follows it and swaps them if they are out of order. It is structurally similar to Selection sort but performs more swaps. It is primarily of educational interest.
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        gosort "github.com/TheAlgorithms/Go/sort"
+    )
+
+    func main() {
+        nums := []int{64, 25, 12, 22, 11}
+        sorted := gosort.Exchange(nums)
+        fmt.Println(sorted) // [11 12 22 25 64]
+    }
+    ```
+
+  </Accordion>
+
+  <Accordion title="Simple sort and ImprovedSimple sort">
+
+    ```go
+    func Simple[T constraints.Ordered](arr []T) []T
+    func ImprovedSimple[T constraints.Ordered](arr []T) []T
+    ```
+
+    | Property | Value |
+    |---|---|
+    | Best case | O(n²) |
+    | Average case | O(n²) |
+    | Worst case | O(n²) |
+    | Space | O(1) |
+    | Stable | No |
+
+    **How it works.** `Simple` iterates over all pairs (i, j) and swaps `arr[i]` and `arr[j]` whenever `arr[i] < arr[j]`. Despite looking counterintuitive, it correctly sorts the array. `ImprovedSimple` starts the outer loop at index 1 and ends the inner loop at `len-1`, skipping one redundant comparison per pass (similar in structure to Insertion sort).
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        gosort "github.com/TheAlgorithms/Go/sort"
+    )
+
+    func main() {
+        nums := []int{3, 1, 4, 1, 5, 9, 2, 6}
+        fmt.Println(gosort.Simple(append([]int{}, nums...)))        // [1 1 2 3 4 5 6 9]
+        fmt.Println(gosort.ImprovedSimple(append([]int{}, nums...))) // [1 1 2 3 4 5 6 9]
+    }
+    ```
+
+  </Accordion>
+
+  <Accordion title="Circle sort">
+
+    ```go
+    func Circle[T constraints.Ordered](arr []T) []T
+    ```
+
+    | Property | Value |
+    |---|---|
+    | Best case | O(n log n) |
+    | Average case | O(n log² n) |
+    | Worst case | O(n log² n) |
+    | Space | O(log n) stack |
+    | Stable | No |
+
+    **How it works.** Circle sort compares elements at the two ends of the array and works inward, swapping pairs that are out of order. It then recursively applies the same process to the left and right halves. The outer loop repeats until a full pass completes with no swaps.
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        gosort "github.com/TheAlgorithms/Go/sort"
+    )
+
+    func main() {
+        nums := []int{6, 5, 3, 1, 8, 7, 2, 4}
+        sorted := gosort.Circle(nums)
+        fmt.Println(sorted) // [1 2 3 4 5 6 7 8]
+    }
+    ```
+
+  </Accordion>
+
+  <Accordion title="Odd-Even sort">
+
+    ```go
+    func OddEvenSort[T constraints.Ordered](arr []T) []T
+    ```
+
+    | Property | Value |
+    |---|---|
+    | Best case | O(n) |
+    | Average case | O(n²) |
+    | Worst case | O(n²) |
+    | Space | O(1) |
+    | Stable | Yes |
+
+    **How it works.** Odd-Even sort (Brick sort) alternates between two phases per pass: an "odd" phase compares elements at positions (1,2), (3,4), (5,6)... and an "even" phase compares elements at positions (0,1), (2,3), (4,5)... Sorting completes when a full pass produces no swaps. It is well-suited to parallel execution since all comparisons within a phase are independent.
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        gosort "github.com/TheAlgorithms/Go/sort"
+    )
+
+    func main() {
+        nums := []int{34, 2, 10, -9}
+        sorted := gosort.OddEvenSort(nums)
+        fmt.Println(sorted) // [-9 2 10 34]
+    }
+    ```
+
+  </Accordion>
+
+</AccordionGroup>
+
+---
+
+<Tip>
+All comparison-based sorts in this package work on any type that satisfies `constraints.Ordered`, which includes all integer types, float types, and `string`. For custom types, implement the `Comparable` interface to use `MaxHeap` directly.
+</Tip>

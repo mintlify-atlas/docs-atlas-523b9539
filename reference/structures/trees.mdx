@@ -1,0 +1,335 @@
+---
+title: "Trees"
+description: "API reference for binary search tree, AVL, Red-Black, B-tree, Trie, Segment tree, and Fenwick tree in TheAlgorithms/Go."
+---
+
+**Import path:** `github.com/TheAlgorithms/Go/structure/...`
+
+All tree types in the `structure/tree` package require `T constraints.Ordered` (any type that supports `<`, `==`, `>`). The `constraints` package is at `github.com/TheAlgorithms/Go/constraints`.
+
+<AccordionGroup>
+
+  <Accordion title="Binary search tree">
+
+Package: `github.com/TheAlgorithms/Go/structure/tree`
+
+A classic BST. No rebalancing is performed; worst-case height is O(n) for sorted input.
+
+**Signatures**
+
+```go
+func NewBinarySearch[T constraints.Ordered]() *BinarySearch[T]
+
+func (t *BinarySearch[T]) Empty() bool
+func (t *BinarySearch[T]) Push(keys ...T)
+func (t *BinarySearch[T]) Delete(val T) bool
+func (t *BinarySearch[T]) Get(key T) (Node[T], bool)
+func (t *BinarySearch[T]) Has(key T) bool
+func (t *BinarySearch[T]) InOrder() []T
+func (t *BinarySearch[T]) PreOrder() []T
+func (t *BinarySearch[T]) PostOrder() []T
+func (t *BinarySearch[T]) LevelOrder() []T
+func (t *BinarySearch[T]) AccessNodesByLayer() [][]T
+func (t *BinarySearch[T]) Depth() int
+func (t *BinarySearch[T]) Min() (T, bool)
+func (t *BinarySearch[T]) Max() (T, bool)
+func (t *BinarySearch[T]) Predecessor(key T) (T, bool)
+func (t *BinarySearch[T]) Successor(key T) (T, bool)
+```
+
+**Example**
+
+```go
+import "github.com/TheAlgorithms/Go/structure/tree"
+
+bst := tree.NewBinarySearch[int]()
+bst.Push(5, 3, 7, 1, 4)
+
+fmt.Println(bst.InOrder())    // [1 3 4 5 7]
+fmt.Println(bst.Has(4))       // true
+fmt.Println(bst.Depth())      // 3
+
+min, _ := bst.Min()           // 1
+succ, _ := bst.Successor(3)   // 4
+
+bst.Delete(3)
+fmt.Println(bst.InOrder())    // [1 4 5 7]
+```
+
+  </Accordion>
+
+  <Accordion title="AVL tree">
+
+Package: `github.com/TheAlgorithms/Go/structure/tree`
+
+A self-balancing BST. After every insert or delete the tree performs rotations to keep the height balanced, guaranteeing O(log n) for all operations.
+
+**Signatures**
+
+```go
+func NewAVL[T constraints.Ordered]() *AVL[T]
+
+func (avl *AVL[T]) Empty() bool
+func (avl *AVL[T]) Push(keys ...T)
+func (avl *AVL[T]) Delete(key T) bool
+func (avl *AVL[T]) Get(key T) (Node[T], bool)
+func (avl *AVL[T]) Has(key T) bool
+func (avl *AVL[T]) InOrder() []T
+func (avl *AVL[T]) PreOrder() []T
+func (avl *AVL[T]) PostOrder() []T
+func (avl *AVL[T]) LevelOrder() []T
+func (avl *AVL[T]) AccessNodesByLayer() [][]T
+func (avl *AVL[T]) Depth() int
+func (avl *AVL[T]) Min() (T, bool)
+func (avl *AVL[T]) Max() (T, bool)
+func (avl *AVL[T]) Predecessor(key T) (T, bool)
+func (avl *AVL[T]) Successor(key T) (T, bool)
+```
+
+**Example**
+
+```go
+import "github.com/TheAlgorithms/Go/structure/tree"
+
+avl := tree.NewAVL[int]()
+avl.Push(10, 20, 30, 40, 50) // triggers rotations to stay balanced
+
+fmt.Println(avl.Depth())    // ~3 (balanced)
+fmt.Println(avl.InOrder())  // [10 20 30 40 50]
+
+avl.Delete(30)
+fmt.Println(avl.Has(30))    // false
+```
+
+<Note>
+Each `AVLNode` stores a `height` field. The balance factor (left height minus right height) is kept in `[-1, 1]` at all times.
+</Note>
+
+  </Accordion>
+
+  <Accordion title="Red-Black tree">
+
+Package: `github.com/TheAlgorithms/Go/structure/tree`
+
+A self-balancing BST where every node is coloured Red or Black. Insertions and deletions trigger colour flips and rotations to maintain the Red-Black invariants.
+
+**Signatures**
+
+```go
+func NewRB[T constraints.Ordered]() *RB[T]
+
+func (t *RB[T]) Empty() bool
+func (t *RB[T]) Push(keys ...T)
+func (t *RB[T]) Delete(data T) bool
+func (t *RB[T]) Get(key T) (Node[T], bool)
+func (t *RB[T]) Has(key T) bool
+func (t *RB[T]) InOrder() []T
+func (t *RB[T]) PreOrder() []T
+func (t *RB[T]) PostOrder() []T
+func (t *RB[T]) LevelOrder() []T
+func (t *RB[T]) AccessNodesByLayer() [][]T
+func (t *RB[T]) Depth() int
+func (t *RB[T]) Min() (T, bool)
+func (t *RB[T]) Max() (T, bool)
+func (t *RB[T]) Predecessor(key T) (T, bool)
+func (t *RB[T]) Successor(key T) (T, bool)
+```
+
+**Example**
+
+```go
+import "github.com/TheAlgorithms/Go/structure/tree"
+
+rb := tree.NewRB[string]()
+rb.Push("banana", "apple", "cherry", "date")
+
+fmt.Println(rb.InOrder())      // [apple banana cherry date]
+fmt.Println(rb.Has("cherry"))  // true
+
+pred, _ := rb.Predecessor("cherry") // "banana"
+rb.Delete("banana")
+fmt.Println(rb.InOrder())      // [apple cherry date]
+```
+
+  </Accordion>
+
+  <Accordion title="B-tree">
+
+Package: `github.com/TheAlgorithms/Go/structure/tree`
+
+A self-balancing multiway search tree that keeps data sorted and allows searches, sequential access, insertions, and deletions in O(log n). Unlike binary trees, each node can hold many keys.
+
+**Signatures**
+
+```go
+func NewBTree[T constraints.Ordered](maxKeys int) *BTree[T]
+func NewBTreeNode[T constraints.Ordered](maxKeys int, isLeaf bool) *BTreeNode[T]
+
+func (tree *BTree[T]) Insert(key T)
+func (tree *BTree[T]) Delete(key T)
+func (tree *BTree[T]) Search(key T) bool
+```
+
+`maxKeys` must be ≥ 3. Each non-root node holds between `(maxKeys-1)/2` and `maxKeys` keys.
+
+**Example**
+
+```go
+import "github.com/TheAlgorithms/Go/structure/tree"
+
+bt := tree.NewBTree[int](3) // 3-key B-tree (order-2)
+bt.Insert(10)
+bt.Insert(20)
+bt.Insert(5)
+bt.Insert(15)
+
+fmt.Println(bt.Search(15)) // true
+fmt.Println(bt.Search(99)) // false
+
+bt.Delete(10)
+fmt.Println(bt.Search(10)) // false
+```
+
+  </Accordion>
+
+  <Accordion title="Trie">
+
+Package: `github.com/TheAlgorithms/Go/structure/trie`
+
+A prefix tree keyed by `rune`. Each node stores a map of children and an `isLeaf` flag marking word boundaries. `Remove` is lazy (marks the leaf false but does not delete nodes); call `Compact` to reclaim memory.
+
+**Signatures**
+
+```go
+func NewNode() *Node
+
+func (n *Node) Insert(s ...string)
+func (n *Node) Find(s string) bool
+func (n *Node) Remove(s ...string)
+func (n *Node) Compact() (remove bool)
+func (n *Node) Size() int     // number of stored words
+func (n *Node) Capacity() int // number of nodes
+```
+
+**Example**
+
+```go
+import "github.com/TheAlgorithms/Go/structure/trie"
+
+root := trie.NewNode()
+root.Insert("go", "golang", "gopher", "goroutine")
+
+fmt.Println(root.Find("go"))        // true
+fmt.Println(root.Find("gop"))       // false (not a full word)
+fmt.Println(root.Size())            // 4
+
+root.Remove("go", "golang")
+fmt.Println(root.Find("go"))        // false
+
+root.Compact() // prune nodes no longer needed
+fmt.Println(root.Size())            // 2
+```
+
+<Tip>
+`Compact` returns `true` if the node itself should be removed (no leaf, no children). Call it on the root after bulk removals to keep memory usage low.
+</Tip>
+
+  </Accordion>
+
+  <Accordion title="Segment tree">
+
+Package: `github.com/TheAlgorithms/Go/structure/segmenttree`
+
+A segment tree with lazy propagation for efficient range-sum queries and range updates on an integer array.
+
+| Operation | Complexity |
+|---|---|
+| Build | O(n log n) |
+| Query | O(log n) |
+| Update | O(log n) |
+
+**Signatures**
+
+```go
+func NewSegmentTree(Array []int) *SegmentTree
+
+// node, leftNode, rightNode always start at 1, 0, len(Array)-1
+func (s *SegmentTree) Build(node, left, right int)
+func (s *SegmentTree) Query(node, leftNode, rightNode, firstIndex, lastIndex int) int
+func (s *SegmentTree) Update(node, leftNode, rightNode, firstIndex, lastIndex, value int)
+func (s *SegmentTree) Propagate(node, leftNode, rightNode int)
+```
+
+**Example**
+
+```go
+import "github.com/TheAlgorithms/Go/structure/segmenttree"
+
+arr := []int{1, 2, 3, 4, 5}
+st := segmenttree.NewSegmentTree(arr)
+n := len(arr)
+
+// Sum of elements in range [1, 3] (0-indexed)
+sum := st.Query(1, 0, n-1, 1, 3) // 2+3+4 = 9
+fmt.Println(sum)
+
+// Add 10 to every element in range [0, 2]
+st.Update(1, 0, n-1, 0, 2, 10)
+
+// Re-query the same range
+sum = st.Query(1, 0, n-1, 1, 3) // 12+13+4 = 29
+fmt.Println(sum)
+```
+
+<Note>
+Always pass `1, 0, len(Array)-1` as the starting `node`, `leftNode`, and `rightNode` arguments. These are the fixed entry points for the recursive implementation.
+</Note>
+
+  </Accordion>
+
+  <Accordion title="Fenwick tree (Binary indexed tree)">
+
+Package: `github.com/TheAlgorithms/Go/structure/fenwicktree`
+
+A Fenwick tree (also called a Binary Indexed Tree) for prefix-sum queries and point updates. Uses 1-based indexing internally.
+
+| Operation | Complexity |
+|---|---|
+| Build | O(n) |
+| PrefixSum / RangeSum | O(log n) |
+| Add (point update) | O(log n) |
+
+**Signatures**
+
+```go
+func NewFenwickTree(array []int) *FenwickTree
+
+func (f *FenwickTree) PrefixSum(pos int) int
+func (f *FenwickTree) RangeSum(l int, r int) int
+func (f *FenwickTree) Add(pos int, value int)
+```
+
+All positions use **1-based indexing** (position 1 corresponds to `array[0]`).
+
+**Example**
+
+```go
+import "github.com/TheAlgorithms/Go/structure/fenwicktree"
+
+arr := []int{1, 2, 3, 4, 5}
+ft := fenwicktree.NewFenwickTree(arr)
+
+fmt.Println(ft.PrefixSum(3))   // 1+2+3 = 6
+fmt.Println(ft.RangeSum(2, 4)) // 2+3+4 = 9
+
+ft.Add(3, 10) // add 10 to position 3 (arr[2])
+fmt.Println(ft.PrefixSum(3))   // 1+2+13 = 16
+```
+
+<Tip>
+Prefer the Fenwick tree over the Segment tree when you only need prefix/range sums with point updates. Its constant factors are smaller and it uses O(n) space.
+</Tip>
+
+  </Accordion>
+
+</AccordionGroup>

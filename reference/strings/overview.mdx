@@ -1,0 +1,52 @@
+---
+title: "Strings & Text"
+description: "Reference for string algorithms, pattern matching utilities, and cipher implementations in TheAlgorithms/Go."
+---
+
+The `strings` and `cipher` packages in TheAlgorithms/Go provide a collection of educational implementations covering text analysis, pattern matching, distance metrics, and classical cryptography. All implementations are intended for learning purposes and algorithm exploration.
+
+## String algorithms and utilities
+
+| Package / File | Function(s) | Description |
+|---|---|---|
+| `strings` (root) | `CountChars` | Counts occurrences of each character in a string, returning `map[rune]int` |
+| `strings` (root) | `IsIsogram` | Checks if a string is a first-, second-, or third-order isogram |
+| `strings` (root) | `IsSubsequence` | Checks if one string is a subsequence of another |
+| `ahocorasick/` | `AhoCorasick`, `Advanced` | Multi-pattern substring search using the Aho-Corasick automaton |
+| `kmp/` | `Kmp` | Knuth-Morris-Pratt pattern search returning all match positions |
+| `horspool/` | `Horspool` | Boyer-Moore-Horspool single-pattern search with Unicode support |
+| `search/` | `BoyerMoore` | Boyer-Moore search with Apostolico-Giancarlo optimisation |
+| `search/` | `Naive` | Brute-force substring search, O(n×m) |
+| `manacher/` | `LongestPalindrome` | Manacher's algorithm for the longest palindromic substring in O(n) |
+| `levenshtein/` | `Distance` | Weighted edit distance between two strings |
+| `hamming/` | `Distance` | Hamming distance between two equal-length strings |
+| `palindrome/` | `IsPalindrome`, `IsPalindromeRecursive` | Checks whether a string reads the same forwards and backwards |
+| `pangram/` | `IsPangram` | Checks whether a string contains every letter of the alphabet |
+| `parenthesis/` | `Parenthesis` | Validates that every opening parenthesis is correctly closed |
+| `genetic/` | `GeneticString` | Evolves a random string towards a target using a genetic algorithm |
+| `guid/` | `New` | Generates a random UUID v4 string |
+
+## Cipher packages and functions
+
+| Package | Function(s) | Description |
+|---|---|---|
+| `caesar/` | `Encrypt`, `Decrypt` | Shifts each letter by a fixed key value |
+| `rot13/` | `rot13` | Caesar cipher specialised to a shift of 13 |
+| `xor/` | `Encrypt`, `Decrypt` | XOR each byte of the plaintext against a single-byte key |
+| `rsa/` | `Encrypt`, `Decrypt` | Textbook RSA using modular exponentiation on `[]rune` |
+| `diffiehellman/` | `GenerateShareKey`, `GenerateMutualKey` | Diffie-Hellman key exchange over a fixed prime field |
+| `polybius/` | `NewPolybius`, `Encrypt`, `Decrypt` | Polybius square substitution cipher |
+| `transposition/` | `Encrypt`, `Decrypt` | Columnar transposition cipher keyed by a keyword |
+| `railfence/` | `Encrypt`, `Decrypt` | Rail fence (zigzag) transposition cipher |
+| `dsa/` | `New`, `Sign`, `Verify` | Digital Signature Algorithm with 1024-bit parameter generation |
+
+## Explore further
+
+<CardGroup cols={2}>
+  <Card title="Pattern matching & utilities" href="/reference/strings/pattern-matching">
+    Detailed reference for every string search, distance, and text-analysis function.
+  </Card>
+  <Card title="Ciphers & cryptography" href="/reference/strings/ciphers">
+    Detailed reference for every classical and modern cipher implementation.
+  </Card>
+</CardGroup>

@@ -1,0 +1,403 @@
+---
+title: "Linear Data Structures"
+description: "API reference for linked lists, stacks, queues, deque, dynamic array, and circular queue in TheAlgorithms/Go."
+---
+
+**Import path:** `github.com/TheAlgorithms/Go/structure/...`
+
+<AccordionGroup>
+
+  <Accordion title="Singly linked list">
+
+Package: `github.com/TheAlgorithms/Go/structure/linkedlist`
+
+A generic singly linked list. Only the `Next` pointer of each node is used; `Prev` is unused.
+
+**Signatures**
+
+```go
+func NewSingly[T any]() *Singly[T]
+
+func (ll *Singly[T]) AddAtBeg(val T)
+func (ll *Singly[T]) AddAtEnd(val T)
+func (ll *Singly[T]) DelAtBeg() (T, bool)
+func (ll *Singly[T]) DelAtEnd() (T, bool)
+func (ll *Singly[T]) DelByPos(pos int) (T, bool)
+func (ll *Singly[T]) Count() int
+func (ll *Singly[T]) Reverse()
+func (ll *Singly[T]) ReversePartition(left, right int) error
+func (ll *Singly[T]) Display()
+```
+
+**Example**
+
+```go
+import "github.com/TheAlgorithms/Go/structure/linkedlist"
+
+ll := linkedlist.NewSingly[int]()
+ll.AddAtBeg(1)
+ll.AddAtEnd(2)
+ll.AddAtEnd(3)
+
+val, ok := ll.DelAtBeg() // val=1, ok=true
+fmt.Println(ll.Count())  // 2
+
+ll.Reverse()
+ll.Display() // 3 2
+```
+
+<Tip>
+`ReversePartition(left, right int)` reverses only nodes in the 1-based range `[left, right]` in place.
+</Tip>
+
+  </Accordion>
+
+  <Accordion title="Doubly linked list">
+
+Package: `github.com/TheAlgorithms/Go/structure/linkedlist`
+
+A generic circular doubly linked list with a sentinel head node. Both `Next` and `Prev` pointers are used.
+
+**Signatures**
+
+```go
+func NewDoubly[T any]() *Doubly[T]
+
+func (ll *Doubly[T]) AddAtBeg(val T)
+func (ll *Doubly[T]) AddAtEnd(val T)
+func (ll *Doubly[T]) DelAtBeg() (T, bool)
+func (ll *Doubly[T]) DelAtEnd() (T, bool)
+func (ll *Doubly[T]) DelByPos(pos int) (T, bool)
+func (ll *Doubly[T]) Remove(n *Node[T]) T
+func (ll *Doubly[T]) Count() int
+func (ll *Doubly[T]) Reverse()
+func (ll *Doubly[T]) Front() *Node[T]
+func (ll *Doubly[T]) Back() *Node[T]
+func (ll *Doubly[T]) MoveToBack(n *Node[T])
+func (ll *Doubly[T]) Display()
+func (ll *Doubly[T]) DisplayReverse()
+```
+
+**Example**
+
+```go
+import "github.com/TheAlgorithms/Go/structure/linkedlist"
+
+ll := linkedlist.NewDoubly[string]()
+ll.AddAtEnd("a")
+ll.AddAtEnd("b")
+ll.AddAtBeg("z")
+
+ll.Display()        // z a b
+ll.DisplayReverse() // b a z
+
+front := ll.Front() // node with Val="z"
+ll.MoveToBack(front)
+ll.Display()        // a b z
+```
+
+  </Accordion>
+
+  <Accordion title="Cyclic linked list">
+
+Package: `github.com/TheAlgorithms/Go/structure/linkedlist`
+
+A circular doubly linked list where the tail's `Next` points back to the head. Includes a solution to the Josephus problem.
+
+**Signatures**
+
+```go
+func NewCyclic[T any]() *Cyclic[T]
+
+func (cl *Cyclic[T]) Add(val T)
+func (cl *Cyclic[T]) Rotate(places int)
+func (cl *Cyclic[T]) Delete() bool
+func (cl *Cyclic[T]) Destroy()
+func (cl *Cyclic[T]) Walk() *Node[T]
+
+// Josephus problem solver (int only)
+func JosephusProblem(cl *Cyclic[int], k int) int
+```
+
+**Example**
+
+```go
+import "github.com/TheAlgorithms/Go/structure/linkedlist"
+
+cl := linkedlist.NewCyclic[int]()
+for i := 1; i <= 5; i++ {
+    cl.Add(i)
+}
+
+// Rotate forward 2 places
+cl.Rotate(2)
+
+// Josephus problem: 5 people, skip every 2nd
+cl2 := linkedlist.NewCyclic[int]()
+for i := 1; i <= 5; i++ {
+    cl2.Add(i)
+}
+survivor := linkedlist.JosephusProblem(cl2, 2)
+fmt.Println(survivor) // 3
+```
+
+<Note>
+`Rotate` with a negative value rotates in the opposite direction. The implementation normalises `places` to the minimal rotation using modular arithmetic.
+</Note>
+
+  </Accordion>
+
+  <Accordion title="Stack">
+
+Package: `github.com/TheAlgorithms/Go/structure/stack`
+
+Three implementations are provided. All follow LIFO order.
+
+**Array-backed stack (generic)**
+
+```go
+func NewStack[T any]() *Array[T]
+
+func (s *Array[T]) Push(value T)
+func (s *Array[T]) Pop() T        // returns zero value if empty
+func (s *Array[T]) Peek() T       // returns zero value if empty
+func (s *Array[T]) IsEmpty() bool
+func (s *Array[T]) Length() int
+```
+
+**Linked-list stack (`any` elements)**
+
+```go
+// Stack is initialised as a zero value: var s stack.Stack
+func (ll *Stack) Push(n any)
+func (ll *Stack) Pop() any
+func (ll *Stack) Peek() any
+func (ll *Stack) IsEmpty() bool
+func (ll *Stack) Length() int
+func (ll *Stack) Show() []any
+```
+
+**`container/list`-backed stack (`any` elements)**
+
+```go
+// SList must have Stack field initialised: sl := stack.SList{Stack: list.New()}
+func (sl *SList) Push(val any)
+func (sl *SList) Pop() (any, error)
+func (sl *SList) Peek() (any, error)
+func (sl *SList) IsEmpty() bool
+func (sl *SList) Length() int
+```
+
+**Example — array stack**
+
+```go
+import "github.com/TheAlgorithms/Go/structure/stack"
+
+s := stack.NewStack[int]()
+s.Push(10)
+s.Push(20)
+s.Push(30)
+
+fmt.Println(s.Peek())   // 30
+fmt.Println(s.Pop())    // 30
+fmt.Println(s.Length()) // 2
+```
+
+  </Accordion>
+
+  <Accordion title="Queue">
+
+Package: `github.com/TheAlgorithms/Go/structure/queue`
+
+Three implementations: array-backed package-level functions, a linked-list `Queue` struct, and a `container/list`-backed `LQueue` struct.
+
+**Array queue (package-level, `any` elements)**
+
+```go
+var ListQueue []any
+
+func EnQueue(n any)
+func DeQueue() any
+func FrontQueue() any
+func BackQueue() any
+func LenQueue() int
+func IsEmptyQueue() bool
+```
+
+**Linked-list queue**
+
+```go
+// Queue zero value is usable
+func (ll *Queue) enqueue(n any)
+func (ll *Queue) dequeue() any
+func (ll *Queue) frontQueue() any
+func (ll *Queue) backQueue() any
+func (ll *Queue) isEmpty() bool
+func (ll *Queue) len() int
+```
+
+**`container/list` queue**
+
+```go
+// LQueue must initialise its list: lq := queue.LQueue{queue: list.New()}
+func (lq *LQueue) Enqueue(value any)
+func (lq *LQueue) Dequeue() error
+func (lq *LQueue) Front() (any, error)
+func (lq *LQueue) Back() (any, error)
+func (lq *LQueue) Len() int
+func (lq *LQueue) Empty() bool
+```
+
+**Example — array queue**
+
+```go
+import "github.com/TheAlgorithms/Go/structure/queue"
+
+queue.EnQueue("first")
+queue.EnQueue("second")
+queue.EnQueue("third")
+
+fmt.Println(queue.FrontQueue()) // first
+fmt.Println(queue.DeQueue())    // first
+fmt.Println(queue.LenQueue())   // 2
+```
+
+<Note>
+The array queue uses a package-level slice (`ListQueue`). It is not safe for concurrent use and is shared across all callers in the same package.
+</Note>
+
+  </Accordion>
+
+  <Accordion title="Deque">
+
+Package: `github.com/TheAlgorithms/Go/structure/deque`
+
+A generic double-ended queue backed by a slice. Supports enqueue and dequeue at both ends.
+
+**Signatures**
+
+```go
+func New[T any]() *DoublyEndedQueue[T]
+
+func (dq *DoublyEndedQueue[T]) EnqueueFront(item T)
+func (dq *DoublyEndedQueue[T]) EnqueueRear(item T)
+func (dq *DoublyEndedQueue[T]) DequeueFront() (T, error)
+func (dq *DoublyEndedQueue[T]) DequeueRear() (T, error)
+func (dq *DoublyEndedQueue[T]) Front() (T, error)
+func (dq *DoublyEndedQueue[T]) Rear() (T, error)
+func (dq *DoublyEndedQueue[T]) IsEmpty() bool
+func (dq *DoublyEndedQueue[T]) Length() int
+```
+
+`DequeueFront` and `DequeueRear` return `deque.ErrEmptyDequeue` when called on an empty deque.
+
+**Example**
+
+```go
+import "github.com/TheAlgorithms/Go/structure/deque"
+
+dq := deque.New[int]()
+dq.EnqueueRear(1)
+dq.EnqueueRear(2)
+dq.EnqueueFront(0)
+
+front, _ := dq.DequeueFront() // 0
+rear, _  := dq.DequeueRear()  // 2
+fmt.Println(dq.Length())      // 1
+```
+
+  </Accordion>
+
+  <Accordion title="Dynamic array">
+
+Package: `github.com/TheAlgorithms/Go/structure/dynamicarray`
+
+An educatonal resizable array that behaves like Go slices. Capacity doubles when the backing array is full (starting at 10).
+
+**Signatures**
+
+```go
+// DynamicArray zero value starts with zero capacity; capacity grows automatically.
+type DynamicArray struct {
+    Size        int
+    Capacity    int
+    ElementData []any
+}
+
+func (da *DynamicArray) Add(element any)
+func (da *DynamicArray) Get(index int) (any, error)
+func (da *DynamicArray) Put(index int, element any) error
+func (da *DynamicArray) Remove(index int) error
+func (da *DynamicArray) IsEmpty() bool
+func (da *DynamicArray) GetData() []any
+func (da *DynamicArray) NewCapacity()
+```
+
+**Example**
+
+```go
+import "github.com/TheAlgorithms/Go/structure/dynamicarray"
+
+da := dynamicarray.DynamicArray{}
+da.Add("a")
+da.Add("b")
+da.Add("c")
+
+val, _ := da.Get(1)     // "b"
+_ = da.Put(1, "B")      // update index 1
+_ = da.Remove(0)        // remove "a"
+fmt.Println(da.GetData()) // [B c]
+```
+
+<Tip>
+`GetData()` returns only the live slice `ElementData[:Size]`, not the full backing array.
+</Tip>
+
+  </Accordion>
+
+  <Accordion title="Circular queue">
+
+Package: `github.com/TheAlgorithms/Go/structure/circularqueue`
+
+A generic fixed-capacity circular queue backed by a slice. The rear pointer wraps around using modular arithmetic.
+
+**Signatures**
+
+```go
+func NewCircularQueue[T any](size int) (*CircularQueue[T], error)
+
+func (cq *CircularQueue[T]) Enqueue(item T) error
+func (cq *CircularQueue[T]) Dequeue() (T, error)
+func (cq *CircularQueue[T]) Peek() (T, error)
+func (cq *CircularQueue[T]) IsFull() bool
+func (cq *CircularQueue[T]) IsEmpty() bool
+func (cq *CircularQueue[T]) Size() int
+```
+
+`NewCircularQueue` returns an error if `size <= 0`. `Enqueue` returns an error when full; `Dequeue` and `Peek` return an error when empty.
+
+**Example**
+
+```go
+import "github.com/TheAlgorithms/Go/structure/circularqueue"
+
+cq, err := circularqueue.NewCircularQueue[int](3)
+if err != nil {
+    log.Fatal(err)
+}
+
+_ = cq.Enqueue(10)
+_ = cq.Enqueue(20)
+_ = cq.Enqueue(30)
+
+fmt.Println(cq.IsFull()) // true
+
+val, _ := cq.Dequeue()  // 10
+_ = cq.Enqueue(40)       // wraps around
+peek, _ := cq.Peek()    // 20
+fmt.Println(peek)
+```
+
+  </Accordion>
+
+</AccordionGroup>

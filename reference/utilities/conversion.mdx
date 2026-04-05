@@ -1,0 +1,148 @@
+---
+title: "Type Conversions"
+description: "Go implementations of Base64 encoding, binary/decimal conversion, RGB/hex color conversion, and Roman numeral conversion."
+---
+
+<AccordionGroup>
+  <Accordion title="Base64">
+    Encodes and decodes data using Base64 as specified in [RFC 4648 §4](https://datatracker.ietf.org/doc/html/rfc4648#section-4). Uses the standard alphabet `A–Z`, `a–z`, `0–9`, `+`, `/` with `=` padding.
+
+    **Signatures**
+
+    ```go
+    func Base64Encode(input []byte) string
+    func Base64Decode(input string) []byte
+    ```
+
+    **Example**
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        "github.com/TheAlgorithms/Go/conversion"
+    )
+
+    func main() {
+        encoded := conversion.Base64Encode([]byte("hello world"))
+        fmt.Println(encoded) // aGVsbG8gd29ybGQ=
+
+        decoded := conversion.Base64Decode(encoded)
+        fmt.Println(string(decoded)) // hello world
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Binary ↔ Decimal">
+    Converts between binary string representation and decimal integers. Supported range is 0 to 2^31−1.
+
+    **Signatures**
+
+    ```go
+    func BinaryToDecimal(binary string) (int, error)
+    func DecimalToBinary(num int) (string, error)
+    ```
+
+    Both functions return an error for invalid input: `BinaryToDecimal` rejects strings that contain characters other than `0` and `1`, and `DecimalToBinary` rejects negative integers.
+
+    **Example**
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        "github.com/TheAlgorithms/Go/conversion"
+    )
+
+    func main() {
+        dec, err := conversion.BinaryToDecimal("1010")
+        if err != nil {
+            panic(err)
+        }
+        fmt.Println(dec) // 10
+
+        bin, err := conversion.DecimalToBinary(10)
+        if err != nil {
+            panic(err)
+        }
+        fmt.Println(bin) // 1010
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="RGB ↔ HEX">
+    Converts between a packed 24-bit hex color value (e.g., `0x3498db`) and its individual red, green, and blue byte components.
+
+    **Signatures**
+
+    ```go
+    func HEXToRGB(hex uint) (red, green, blue byte)
+    func RGBToHEX(red, green, blue byte) (hex uint)
+    ```
+
+    The hex value is structured as `0xRRGGBB`: bits 23–16 are red, bits 15–8 are green, and bits 7–0 are blue.
+
+    **Example**
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        "github.com/TheAlgorithms/Go/conversion"
+    )
+
+    func main() {
+        r, g, b := conversion.HEXToRGB(0x3498db)
+        fmt.Printf("R:%d G:%d B:%d\n", r, g, b) // R:52 G:152 B:219
+
+        hex := conversion.RGBToHEX(52, 152, 219)
+        fmt.Printf("0x%06X\n", hex) // 0x3498DB
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Roman numerals">
+    Converts between integers and Roman numeral strings. The valid range is 1 to 3999. Values outside this range return an error.
+
+    **Signatures**
+
+    ```go
+    func IntToRoman(n int) (string, error)
+    func RomanToInt(input string) (int, error)
+    ```
+
+    `RomanToInt` returns `0, nil` for an empty string. Only standard-form Roman numerals are accepted; non-standard forms return an error.
+
+    **Example**
+
+    ```go
+    package main
+
+    import (
+        "fmt"
+        "github.com/TheAlgorithms/Go/conversion"
+    )
+
+    func main() {
+        roman, err := conversion.IntToRoman(2024)
+        if err != nil {
+            panic(err)
+        }
+        fmt.Println(roman) // MMXXIV
+
+        n, err := conversion.RomanToInt("MMXXIV")
+        if err != nil {
+            panic(err)
+        }
+        fmt.Println(n) // 2024
+    }
+    ```
+
+    <Warning>
+      Input values outside the range 1–3999 return an error. Passing 0 or negative numbers to `IntToRoman` will always fail.
+    </Warning>
+  </Accordion>
+</AccordionGroup>

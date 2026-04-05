@@ -1,0 +1,92 @@
+---
+title: "Graph Algorithms Overview"
+description: "A complete reference for graph data structures and algorithms in the TheAlgorithms/Go graph package, covering traversal, shortest paths, spanning trees, and more."
+---
+
+The `graph` package provides a flexible graph data structure along with a comprehensive set of classic graph algorithms. Graphs can be directed or undirected and support weighted edges.
+
+## Installation
+
+```go
+import "github.com/TheAlgorithms/Go/graph"
+```
+
+## The Graph data structure
+
+The core type is `Graph`, backed by an adjacency map that stores edge weights.
+
+```go
+type Graph struct {
+    vertices int
+    edges    map[int]map[int]int // maps source -> destination -> weight
+    Directed bool                // false = undirected, true = directed
+}
+```
+
+Vertices are represented as integers. Edges are stored as `map[int]map[int]int`, so looking up the weight of an edge from `u` to `v` is `g.edges[u][v]`.
+
+### Creating a graph
+
+```go
+// Create an undirected graph with 5 vertices (0–4)
+g := graph.New(5)
+
+// Add an unweighted edge between vertex 0 and vertex 1
+g.AddEdge(0, 1)
+
+// Add a weighted edge between vertex 1 and vertex 2
+g.AddWeightedEdge(1, 2, 10)
+
+// Create a directed graph
+dg := graph.New(4)
+dg.Directed = true
+dg.AddWeightedEdge(0, 1, 5)
+dg.AddWeightedEdge(1, 3, 3)
+```
+
+### Graph API
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `New` | `New(v int) *Graph` | Constructs a new undirected graph with `v` vertices. |
+| `AddVertex` | `(g *Graph) AddVertex(v int)` | Adds vertex `v`; no-op if it already exists. |
+| `AddEdge` | `(g *Graph) AddEdge(one, two int)` | Adds a zero-weight edge. Bidirectional if undirected. |
+| `AddWeightedEdge` | `(g *Graph) AddWeightedEdge(one, two, weight int)` | Adds a weighted edge. Bidirectional if undirected. |
+
+<Note>
+`graph.New(v)` sets the vertex count but does not pre-populate the adjacency map. Vertices are lazily initialized when edges are added. You can also add vertices explicitly with `AddVertex`.
+</Note>
+
+## Algorithm reference
+
+| Algorithm | Function | Category | Time complexity | Space complexity |
+|-----------|----------|----------|-----------------|-----------------|
+| Breadth-first search | `BreadthFirstSearch` | Traversal | O(V + E) | O(V) |
+| Depth-first search | `DepthFirstSearch` | Traversal | O(V + E) | O(V) |
+| Topological sort (DFS) | `Topological` | Traversal / ordering | O(V + E) | O(V) |
+| Topological sort (Kahn's) | `Kahn` | Traversal / ordering | O(V + E) | O(V + E) |
+| Articulation points | `ArticulationPoint` | Traversal / connectivity | O(V + E) | O(V) |
+| Cycle detection | `HasCycle` / `FindAllCycles` | Traversal / structure | O(V + E) | O(V) |
+| Lowest common ancestor | `LowestCommonAncestor` | Traversal / trees | O(n log n) | O(n log n) |
+| Kosaraju's SCC | `Kosaraju` | Strongly connected components | O(V + E) | O(V) |
+| Dijkstra | `Dijkstra` | Shortest path | O((V + E) log V) | O(V) |
+| Bellman-Ford | `BellmanFord` | Shortest path | O(V × E) | O(V) |
+| Floyd-Warshall | `FloydWarshall` | All-pairs shortest path | O(V³) | O(V²) |
+| Edmond-Karp (max flow) | `EdmondKarp` | Network flow | O(V × E²) | O(V + E) |
+| Kruskal's MST | `KruskalMST` | Minimum spanning tree | O(E log E) | O(V + E) |
+| Prim's MST | `PrimMST` | Minimum spanning tree | O(E log V) | O(V + E) |
+| Union-Find | `NewUnionFind` / `Find` / `Union` | Connectivity / MST support | O(α(n)) per op | O(n) |
+
+## Explore by topic
+
+<CardGroup cols={2}>
+  <Card title="Graph Traversal" icon="route" href="/algorithms/graph/traversal">
+    BFS, DFS, topological sort, articulation points, cycle detection, Kosaraju's SCC, and lowest common ancestor.
+  </Card>
+  <Card title="Shortest Path" icon="arrow-right" href="/algorithms/graph/shortest-path">
+    Dijkstra, Bellman-Ford, Floyd-Warshall, and Edmond-Karp max flow.
+  </Card>
+  <Card title="Minimum Spanning Trees" icon="git-fork" href="/algorithms/graph/spanning-tree">
+    Kruskal's algorithm, Prim's algorithm, and the Union-Find data structure.
+  </Card>
+</CardGroup>

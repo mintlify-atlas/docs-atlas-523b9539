@@ -1,0 +1,63 @@
+---
+title: "Searching Algorithms"
+description: "A collection of searching algorithms implemented in Go, covering linear, binary, jump, interpolation, ternary, and selection-based approaches."
+keywords: ["search", "algorithms", "Go", "binary search", "linear search", "jump search", "interpolation search"]
+---
+
+The `search` package provides a set of well-known searching algorithms for integer slices. Each algorithm makes different trade-offs between simplicity, performance, and input requirements.
+
+```go
+import "github.com/TheAlgorithms/Go/search"
+```
+
+<Note>
+  Most algorithms in this package return `(int, error)`. When the target is not found, they return `-1` and `search.ErrNotFound`.
+</Note>
+
+## Complexity overview
+
+| Algorithm | Time (average) | Time (worst) | Space | Sorted input required |
+|---|---|---|---|---|
+| `Linear` | O(n) | O(n) | O(1) | No |
+| `Binary` (recursive) | O(log n) | O(log n) | O(log n) | Yes |
+| `BinaryIterative` | O(log n) | O(log n) | O(1) | Yes |
+| `LowerBound` | O(log n) | O(log n) | O(1) | Yes |
+| `UpperBound` | O(log n) | O(log n) | O(1) | Yes |
+| `Jump` | O(√n) | O(√n) | O(1) | Yes |
+| `Jump2` | O(√n) | O(√n) | O(1) | Yes |
+| `Interpolation` | O(log log n) | O(n) | O(1) | Yes |
+| `TernaryMax` / `TernaryMin` | O(log n) | O(log n) | O(log n) | No (unimodal function) |
+| `SelectK` | O(n) | O(n²) | O(log n) | No |
+
+## When to use each algorithm
+
+**Linear search** is the right choice when the input is unsorted or very small. It requires no pre-conditions and works on any slice.
+
+**Binary search** is the standard choice for sorted integer slices. Use the iterative variant (`BinaryIterative`) to avoid stack overhead on large inputs. Use `LowerBound` or `UpperBound` when you need the insertion point rather than an exact match.
+
+**Jump search** is a good middle ground when random access is expensive relative to sequential access (e.g., on magnetic storage or cache-unfriendly data). It skips ahead in blocks of √n before doing a linear scan. `Jump2` is a cleaner alternative implementation of the same idea.
+
+**Interpolation search** outperforms binary search on uniformly distributed sorted data, achieving O(log log n) average time. Avoid it on skewed or clustered data, where it degrades to O(n).
+
+**Ternary search** (`TernaryMax`, `TernaryMin`) is not for arrays — it finds the maximum or minimum of a unimodal function over a continuous interval. Use it for numerical optimization problems.
+
+**SelectK** finds the k-th largest element in an unsorted slice without fully sorting it. It uses the quickselect algorithm, which runs in O(n) average time.
+
+## Explore the algorithms
+
+<CardGroup cols={2}>
+  <Card
+    title="Algorithm reference"
+    icon="code"
+    href="/algorithms/searching/algorithms"
+  >
+    Function signatures, complexity details, and runnable Go examples for every algorithm in the package.
+  </Card>
+  <Card
+    title="Error handling"
+    icon="circle-exclamation"
+    href="/algorithms/searching/algorithms"
+  >
+    How to work with `ErrNotFound` and handle missing targets correctly.
+  </Card>
+</CardGroup>
